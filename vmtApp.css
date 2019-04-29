@@ -1,0 +1,226 @@
+/********************/
+/*	DOM Formatting  */
+/********************/
+
+html {
+	margin: 0;
+	padding: 0;
+}
+
+body {	  
+	font: 60% verdana, sans-serif;
+	line-height: 0.6;
+/*	color: #12127d;	/**/
+	margin: 0;
+	padding: 0;
+    background-color: #006b6b;
+}
+
+h1 {
+	line-height: 1.3em;
+	color: #1d52c2;
+	font-size: 1.4em;
+}
+
+h2 {
+	font-size: 1.0em;
+	color:  #1d52c2;
+	line-height: .8em;
+}
+
+h3 {
+	font-size: .8em;
+}
+
+#wrapper {
+/*  position: absolute; /**/
+    height:  595px;
+    width: 1200px;
+	margin: 20px auto;
+/*  margin-left: 50px;
+    margin-right: 50px;
+    margin-top: 20px;	/**/
+    background-color: #fff;
+/*  border: 2px double #666666; /**/
+    border: 2px solid #1d52c2;
+}
+
+/*******************/
+/*	Top Container  */
+/*******************/
+
+#top_container{
+	text-align: center;	
+}
+
+/********************/
+/*	Left Container  */
+/********************/
+
+#left_container {
+	float: left;
+	padding: 0 0 0 10px;
+	width: 500px;
+	height: 420px;
+}
+
+#theme_dropdown {
+	width: 50%;
+	float: left;
+}
+
+#year_dropdown {
+	width: 50%;
+	float: right;
+}
+
+#selected_theme {
+	margin-bottom: 0;
+	margin-left: 0;
+}	
+
+#map {
+	position: absolute;
+	height: 350px;
+	width: 480px;
+	border: 1.5px solid #1d52c2;
+	margin-top: 53px; /* was 2px without floating divs above */
+	padding: 2px;	
+}
+
+.towns {
+	stroke: #000;
+	stroke-width: 1px;
+	fill: #fff;
+	opacity: 0.7;
+}
+
+#pointer {
+    float: left;
+    width: 170px;
+	color: #1d52c2;
+    margin-top: 365px;
+    margin-left: 30px;
+    line-height: normal;
+    font-size: 1.00em;
+}
+
+#legend_div {
+	position: relative;
+	margin-top: 416px;	/* was 365px without floating divs above */
+	margin-left: 250px;
+}
+
+#legend_div #legend_title {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 1.0em;
+	font-style: italic;
+	font-weight: bold;
+	color: #1d52c2;
+}
+
+#legend_rect {
+	opacity: 0;
+}
+
+.d3-tip {
+	line-height: 1;
+	font-weight: bold;
+	padding: 12px;
+	background: rgba(0, 0, 0, 0.8);
+	color: #fff;
+	border-radius: 2px;
+	text-align: left;
+	position: absolute;
+	z-index: 40;
+	font: 12px verdana, sans-serif;
+}
+
+/*********************/
+/*	Right Container  */
+/*********************/
+
+#right_container {	
+	float: right;  
+/*	margin-left: 570px;  /**/
+	width: 670px;
+	padding: 0 0 0 10px;
+	margin-top: 2px;	
+}
+
+#button_bank {
+	margin-bottom: 30px;
+	padding: 0 0 30px 0;
+}
+
+/******************************************************/
+/*	Accessible Table (Part of Right Container <div>)  */
+/******************************************************/
+.content {
+	margin: 24px 12px;
+/*	width: 572px;
+	height: 136px;	/**/
+}
+
+.tabs {
+	margin-top: 20px;
+	margin-right: 20px;
+/*	color: #2d006b;		/**/
+	border: 1.5px solid #1d52c2;
+}
+
+.tabs .tabbody{
+	position:relative;
+}
+
+.tabhead {
+	display: none;
+}
+
+#vmt_grid, #vht_grid, #voc_grid, #nox_grid, #co_grid,#co2_grid {
+/*	border: 1px solid blue;
+	margin-top: 10px;		/**/
+	background-color: #ffffff;
+	padding: 3px;
+	font-size: 1.2em;
+}
+
+#vmt_grid th,#vht_grid th,#voc_grid th,#nox_grid th,#co_grid th,#co2_grid th {
+/*	border: 0.2px solid blue;   
+	border-collapse: collapse;   /**/
+	background-color: #bfcff3;
+	padding: 3px;
+	font-size: 80%;
+}
+
+/*  made specific to data tables so that 'close' button (created by ExtJS) does not get unwitting borders  */
+#vmt_grid td,#vht_grid td,#voc_grid td,#nox_grid td,#co_grid td,#co2_grid td {
+/*	border: .2px solid purple;
+	border-collapse: collapse;   /**/
+	background-color: #f2f6fe;
+	padding: 3px;
+}
+
+/*
+td:hover {
+	cursor: text;
+	background: rgba(242, 246, 254, 1);
+}
+/**/
+
+/*********************/
+/*		Other 		 */
+/*********************/
+.hidden {
+	visibility: hidden;
+}
+
+.unhidden {
+	visibility: visible;
+}
+
+.offscreen {
+	position: absolute;
+	left: -500em;
+	top: -100em;
+}
