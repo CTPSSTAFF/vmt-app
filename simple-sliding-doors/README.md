@@ -1,1 +1,1 @@
-Forcing GitHub to create subdirectory - for CSS files for accessible tabs.
+Forcing GitHub to create subdirectory - for GIF and CSS files for accessible tabs.
