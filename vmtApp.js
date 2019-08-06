@@ -42,9 +42,8 @@ CTPS.vmtApp.tabularData_2040 = {};
 CTPS.vmtApp.geoData_2016  = {};
 CTPS.vmtApp.geoData_2040  = {};
 
-// Data "stores" for the accessible grids - really just arrays of objects (key/value pairs).
-CTPS.vmtApp.store_2016 = [];
-CTPS.vmtApp.store_2040 = [];
+// Accessible grid
+CTPS.vmtApp.data_grid;
 
 // Array of map themes
 CTPS.vmtApp.themes = ["THEME_VMT", "THEME_VHT", "THEME_VOC", "THEME_NOX", "THEME_CO",  "THEME_CO2" ];
@@ -157,10 +156,10 @@ Array.prototype.move = function (old_index, new_index) {
 
 
 CTPS.vmtApp.data = {};          // probably fossil
-CTPS.vmtApp.currentTown = '';  
 CTPS.vmtApp.csvData = '';       // probably fossil
 
-
+CTPS.vmtApp.currentTown = '';  
+CTPS.vmtApp.currentTownID = 0;  
     
 function vmtAppInit() {
     // Initialize accessible tabs
@@ -192,6 +191,79 @@ function vmtAppInit() {
 		);
 	}
     
+    // On-change event handler for select_town combo box
+    $("#selected_town").change(function(e) {
+        var i;
+    	var iTownId = +$('#selected_town :selected').val();		
+		if (!iTownId > 0){
+			alert('No city or town selected. Please try selecting a town again from either the dropdown or the map.');
+			return;
+		} else {
+			// Save town name and ID
+			CTPS.vmtApp.currentTown = $('#selected_town :selected').text();
+			CTPS.vmtApp.currentTownID = iTownId;
+            
+			// Harvest the 2016 and 2040 data for the selected town
+            var rec_2016 = {}, rec_2040 = {};
+			for (i = 0; i < CTPS.vmtApp.tabularData_2016.length; i++) {
+				if (+(CTPS.vmtApp.tabularData_2016[i].TOWN_ID) === iTownId){
+					rec_2016 = CTPS.vmtApp.tabularData_2016[i];
+                    rec_2040 = CTPS.vmtApp.tabularData_2040[i];
+					break;
+				}
+			}
+            
+            // Create accessible grid
+            var colDesc = [ { header : 'Metric', dataIndex : 'METRIC' }, 
+                            { header : '2016', 	 dataIndex : 'DATA_2016' }, 
+                            { header : '2040', 	 dataIndex : 'DATA_2040' }
+            ]; 
+            CTPS.vmtApp.data_grid = new AccessibleGrid( 
+                                        {   divId 	:	    'town_data_grid',
+                                            tableId 	:	'town_table',
+                                            summary		: 	'Table columns are name of metric, value of metric for 2016, and value of metric for 2040.',
+                                            caption		:	'Data for ' + CTPS.vmtApp.currentTown,
+                                            ariaLive	:	'assertive',
+                                            colDesc		: 	colDesc
+                                });
+            
+            // Load grid with data for town
+            var dataToLoad = [];
+            dataToLoad[0] = { 'METRIC' : 'VMT (miles)', 'DATA_2016' : rec_2016.VMT_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VMT_TOTAL.toLocaleString() };
+            dataToLoad[1] = { 'METRIC' : 'VHT (hours)', 'DATA_2016' : rec_2016.VHT_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VHT_TOTAL.toLocaleString() };
+            dataToLoad[2] = { 'METRIC' : 'VOC (kilograms)', 'DATA_2016' : rec_2016.VOC_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VOC_TOTAL.toLocaleString() };
+            dataToLoad[3] = { 'METRIC' : 'NOX (kilograms)', 'DATA_2016' : rec_2016.NOX_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.NOX_TOTAL.toLocaleString() };
+            dataToLoad[4] = { 'METRIC' : 'CO (kilograms)', 'DATA_2016' : rec_2016.CO_TOTAL.toLocaleString(),  'DATA_2040' : rec_2040.CO_TOTAL.toLocaleString() };
+            dataToLoad[5] = { 'METRIC' : 'CO2 (kilograms)', 'DATA_2016' : rec_2016.CO2_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.CO2_TOTAL.toLocaleString() };
+            
+            CTPS.vmtApp.data_grid.loadArrayData(dataToLoad);
+        
+        /*
+			// Change highlighted town on map to reflect selected town
+			$(".towns").each(function(i) {
+				if ( +this.id === +iTownId ) {
+					// Outline clicked town in red, bring to front
+					d3.select(this.parentNode.appendChild(this))
+						.transition().duration(100)
+							.style("stroke-width", "4px")
+							.style("stroke", "#ff0000");
+					for (var i=0; i<CTPS.vmtApp.data.length; i++) {
+						if (+CTPS.vmtApp.data[i].properties.TOWN_ID === +this.id) {
+							// Reorder data so selected town moved to last element in array.
+							// Needed in order to properly update data, d3 thinks this town
+							// was drawn last and will improperly update the map otherwise
+							CTPS.vmtApp.data.move(i, CTPS.vmtApp.data.length-1);
+						};
+					};
+				} else {
+					this.style.strokeWidth = "1px";
+					this.style.stroke = "#000";
+				};
+			});
+        */
+		}
+		});
+    
     
 	//////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -221,6 +293,7 @@ function vmtAppInit() {
                 // *** Process tabular data loaded
                 
                 function parseCSV(rec) {
+                    rec.TOWN_ID = +rec.TOWN_ID;
                     rec.VMT_TOTAL = +rec.VMT_TOTAL;
                     rec.VHT_TOTAL = +rec.VHT_TOTAL;
                     rec.VOC_TOTAL = +rec.VOC_TOTAL;
@@ -231,64 +304,9 @@ function vmtAppInit() {
                 
                 CTPS.vmtApp.tabularData_2016.forEach(parseCSV);
                 CTPS.vmtApp.tabularData_2040.forEach(parseCSV);
-                
-                // Load data stores for accessible grids
-                
-                CTPS.vmtApp.store_2016 = [];
-                var i;
-                for (i = 0; i < CTPS.vmtApp.tabularData_2016.length; i ++) {                   
-                    CTPS.vmtApp.store_2016[i] = {   'TOWN'  :    CTPS.vmtApp.tabularData_2016[i].TOWN,                              
-                                                    'VMT'   :   (+CTPS.vmtApp.tabularData_2016[i].VMT_TOTAL.toFixed(0)).toLocaleString(),
-                                                    'VHT'   :   (+CTPS.vmtApp.tabularData_2016[i].VHT_TOTAL.toFixed(0)).toLocaleString(),
-                                                    'VOC'   :   (+CTPS.vmtApp.tabularData_2016[i].VOC_TOTAL.toFixed(0)).toLocaleString(),
-                                                    'NOX'   :   (+CTPS.vmtApp.tabularData_2016[i].NOX_TOTAL.toFixed(0)).toLocaleString(),
-                                                    'CO'    :   (+CTPS.vmtApp.tabularData_2016[i].CO_TOTAL.toFixed(0)).toLocaleString(),
-                                                    'CO2'   :   (+CTPS.vmtApp.tabularData_2016[i].CO2_TOTAL.toFixed(0)).toLocaleString() };
-                }
-                CTPS.vmtApp.store_2040 = [];
-                for (i = 0; i < CTPS.vmtApp.tabularData_2040.length; i ++) {                   
-                    CTPS.vmtApp.store_2040[i] = {   'TOWN'  :    CTPS.vmtApp.tabularData_2040[i].TOWN,                               
-                                                    'VMT'   :   (+CTPS.vmtApp.tabularData_2040[i].VMT_TOTAL.toFixed(0)).toLocaleString(),
-                                                    'VHT'   :   (+CTPS.vmtApp.tabularData_2040[i].VHT_TOTAL.toFixed(0)).toLocaleString(),
-                                                    'VOC'   :   (+CTPS.vmtApp.tabularData_2040[i].VOC_TOTAL.toFixed(0)).toLocaleString(),
-                                                    'NOX'   :   (+CTPS.vmtApp.tabularData_2040[i].NOX_TOTAL.toFixed(0)).toLocaleString(),
-                                                    'CO'    :   (+CTPS.vmtApp.tabularData_2040[i].CO_TOTAL.toFixed(0)).toLocaleString(),
-                                                    'CO2'   :   (+CTPS.vmtApp.tabularData_2040[i].CO2_TOTAL.toFixed(0)).toLocaleString() };
-                }                
-                
-                
-                // Create accessible grids and populate them with data in the data stores
-                var colDesc = [ { header : 'Municipality', 		dataIndex : 'TOWN' }, 
-                                { header : 'VMT', 	dataIndex : 'VMT' }, 
-                                { header : 'VHT', 	dataIndex : 'VHT' }, 
-                                { header : 'VOC', 	dataIndex : 'VOC' },
-                                { header : 'NOX', 	dataIndex : 'NOX' },
-                                { header : 'CO', 	dataIndex : 'CO'  },
-                                { header : 'CO2', 	dataIndex : 'CO2' },
-                                ]; 
-
-                CTPS.vmtApp.grid_2016 = new AccessibleGrid( { divId 	:	'grid_2016',
-                                                            tableId 	:	'table_2016',
-                                                            summary		: 	'Table columns are town name, total VMT, total VHT, total VOC emissions, total NOX emissions, total CO emissions, and total CO2 emissions.',
-                                                            caption		:	'Data for 2016',
-                                                            ariaLive	:	'assertive',
-                                                            colDesc		: 	colDesc
-                                                });								
-                CTPS.vmtApp.grid_2016.loadArrayData(CTPS.vmtApp.store_2016);
-
-                CTPS.vmtApp.grid_2040 = new AccessibleGrid( { divId 	:	'grid_2040',
-                                                            tableId 	:	'table_2040',
-                                                            summary		: 	'Table columns are town name, total VMT, total VHT, total VOC emissions, total NOX emissions, total CO emissions, and total CO2 emissions.',
-                                                            caption		:	'Data for 2040',
-                                                            ariaLive	:	'assertive',
-                                                            colDesc		: 	colDesc
-                                                });								
-                CTPS.vmtApp.grid_2040.loadArrayData(CTPS.vmtApp.store_2016);                                
-                
-                
-                
-                
+ 
                  var _DEBUG_HOOK_0 = 0;
+                 
                 // *** Process spatial data loaded
                 
                 // Make a 'deep' copy of topoTowns
