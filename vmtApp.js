@@ -366,59 +366,14 @@ function vmtAppInit() {
 
 
 	
-	// Function to initialize the Table Grids
-	CTPS.vmtApp.initGrids = function() {
-		var colDesc = [ { header : 'Municipality', 		dataIndex : 'TOWN' }, 
-						{ header : 'VMT', 	dataIndex : 'VMT_TOTAL' }, 
-						{ header : 'VHT', 	dataIndex : 'VHT_TOTAL' }, 
-						{ header : 'VOC', 	dataIndex : 'VOC_TOTAL' },
-						{ header : 'NOX', 	dataIndex : 'NOX_TOTAL' },
-						{ header : 'CO', 	dataIndex : 'CO_TOTAL' },
-                        { header : 'CO2', 	dataIndex : 'CO2_TOTAL' },
-						];
-		
-		CTPS.vmtApp.grid_2016 = new AccessibleGrid( { divId 	:	'grid_2016',
-													tableId 	:	'table_2016',
-													summary		: 	'Table columns are town name, total VMT, total VHT, total VOC emissions, total NOX emissions, total CO emissions, and total CO2 emissions.',
-													caption		:	'Data for 2016',
-													ariaLive	:	'assertive',
-													colDesc		: 	colDesc
-										});								
-		CTPS.vmtApp.grid_2016.loadArrayData(CTPS.vmtApp.store_2016);
 
-		CTPS.vmtApp.grid_2040 = new AccessibleGrid( { divId 	:	'grid_2040',
-													tableId 	:	'table_2040',
-													summary		: 	'Table columns are town name, total VMT, total VHT, total VOC emissions, total NOX emissions, total CO emissions, and total CO2 emissions.',
-													caption		:	'Data for 2040',
-													ariaLive	:	'assertive',
-													colDesc		: 	colDesc
-										});								
-		CTPS.vmtApp.grid_2040.loadArrayData(CTPS.vmtApp.store_2016);
-		
-		return { "vmtGrid": CTPS.vmtApp.vmtGrid,
-				 "vhtGrid": CTPS.vmtApp.vhtGrid,
-				 "vocGrid": CTPS.vmtApp.vocGrid,
-				 "noxGrid": CTPS.vmtApp.noxGrid,
-				 "coGrid" : CTPS.vmtApp.coGrid,
-				 "co2Grid": CTPS.vmtApp.co2Grid	};
-	}; // initGrids()
 
-	// Function to load the Table data into the data stores
-	CTPS.vmtApp.populateDataStores = function(aAttrs) {
 
-	};
 	
-	//Function to clear Table Grids
-	CTPS.vmtApp.clearGrids = function() {
-		$('#vmt_grid').html("");
-		$('#vht_grid').html("");
-		$('#voc_grid').html("");
-		$('#nox_grid').html("");
-		$('#co_grid').html("");
-		$('#co2_grid').html("");
-	};
+
 
 	//Function to display Table (called above on click)
+    // ***** FOSSIL *****
 	CTPS.vmtApp.displayTable = function(data) {
 		
 		//Reset and unhide table
@@ -798,77 +753,10 @@ function vmtAppInit() {
 		};
 	};
 	
-	CTPS.vmtApp.init = function() {
-        
-    /* 
-        // Load all data required by app
-        var MPO_towns = "data/MA_TOWNS_MPO97.json";
-        var MA_outline = "data/MA_TOWNS_NON_MPO97.json";
-        var csvData_2016 = "data/CTPS_TOWNS_MAPC_97_VMT_2016.csv";
-        var csvData_2040 = "data/CTPS_TOWNS_MAPC_VMT_2040.csv";
-        
-        var q = d3.queue()
-                .defer(d3.json, MPO_towns)
-                .defer(d3.json, MA_outline)
-                .defer(d3.csv, csvData_2016)
-                .defer(d3.csv, csvData_2040)
-				.awaitAll(function(error, results) { 
-                    // Check for errors
-                    if (error !== null) {
-                        alert('Failure loading JSON or CSV file.\n' +
-                              'Status: ' + error.status + '\n' +
-                              'Status text: ' + error.statusText + '\n' +
-                              'URL :' + error.responseURL);
-                        return;
-                    }              
-                    var topoTowns = results[0];
-                    var topoOutline = results[1];                    
-                    CTPS.vmtApp.tabularData_2016 = results[2];
-                    CTPS.vmtApp.tabularData_2040 = results[3];      
-                    
-                    function parseCSV(rec) {
-                        rec.VMT_TOTAL = +rec.VMT_TOTAL;
-                        rec.VHT_TOTAL = +rec.VHT_TOTAL;
-                        rec.VOC_TOTAL = +rec.VOC_TOTAL;
-                        rec.NOX_TOTAL = +rec.NOX_TOTAL;
-                        rec.CO_TOTAL  = +rec.CO_TOTAL;
-                        rec.CO2_TOTAL = +rec.CO2_TOTAL;
-                    } // parseCSV()
-                    
-                    CTPS.vmtApp.tabularData_2016.forEach(parseCSV);
-                    CTPS.vmtApp.tabularData_2016.forEach(parseCSV);
-                    
-                    // Make a 'deep' copy of topoTowns
-                    var towns2 = Object.assign({}, topoTowns);
-                    
-                    function joinGeoWithTabular(towns,tabular) {
-                        var i, j;
-                        for (i = 0; i < towns.length; i++) {
-                            for (j = 0; j < tabular.length; j++) {
-                                if (+towns[i].properties.TOWN_ID === +tabular[j].TOWN_ID) {
-                                    towns[i].properties = tabular[j];
-                                }
-                            }
-                        };                      
-                    } // joinGeoWithTabular()
-                    
-                    joinGeoWithTabular(topoTowns, CTPS.vmtApp.tabularData_2016);
-                    joinGeoWithTabular(topoTowns2, CTPS.vmtApp.tabularData_2040);
-                                         
-                    CTPS.vmtApp.topoOutline = topojson.feature(topoOutline, topoOutline.objects.MA_TOWNS_NON_MPO97).features;
-                    
-                    var _DEBUG_HOOK = 0;
-                }); // q.awaitAll()
-        
-        */
-        
+	CTPS.vmtApp.init = function() {   
 		// Initialize Map
 		CTPS.vmtApp.csvData = CTPS.vmtApp.displayYear(2016); //load 2016 data on start
-        
-        
-        
-        
-        
+
 		CTPS.vmtApp.initMap();
 		
 		// Set the "alt" and "title" attributes of the page element containing the map.
