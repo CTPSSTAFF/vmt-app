@@ -40,14 +40,24 @@
 			color: #1d52c2;
 		}
 		table {
-			border-top: 1px solid black;
-			border-bottom: 1px solid black;
+			border-top: 3px double black;       /* TEMP */
+			border-bottom: 3px double black;
 		}
+        thead {
+            border-bottom: 3px double black;
+        }
 		tr {
 			font-size: 0.9em;
 		}
+       .tr_header {
+            font-size: 1.1em;
+        }
 		td {
 			padding-left: 15px;
+		}
+        th {
+			padding-left: 15px;
+            text-align: left;
 		}
 		.th_section {
 			text-align: left;
@@ -67,66 +77,54 @@
 	<body>
 		<div id="bigbox">
 		<div id="closeLink2">
-			<a href="http://www.ctps.org/geoserver/www/apps/vmtApp/index.html" class="button"
+			<a href="https://www.ctps.org/dv/vmtApp/index.html" class="button"
 			onclick="return targetopener(this,true,true)">Close Help Window</a>   
 		</div>	<!--   END OF CLOSELINK  -->
 		<br/>
 		<h2>Boston Region MPO Vehicle-Miles Traveled and Emissions Data Browser</h2>
 		<h3>Introduction </h3>
-		<p>You may use this application to browse Central Transportation Planning Staff’s (CTPS) database of 
-			modeled vehicle-miles traveled (VMT), vehicle-hours traveled (VHT), and emissions data for the 101 
-			cities and towns in the Boston Region Metropolitan Planning Organization (MPO). The data are for 
-			the 2012 base year, 2020 future year and 2040 future year. CTPS modeled these data for the publication,
-			Charting Progress to 2040, which is the current Long-Range Transportation Plan (LRTP) for the Boston 
-			region. The future-year scenarios include proposed key regional transportation projects identified in 
-			the plan (see 
-			<a href="http://www.ctps.org/data/pdf/plans/lrtp/charting/2040_LRTP_Chapter5_final.pdf"/>
-				http://www.ctps.org/data/pdf/plans/lrtp/charting/2040_LRTP_Chapter5_final.pdf
+		<p>You may use this application to browse Central Transportation Planning Staff’s (CTPS) database of modeled vehicle-miles traveled (VMT), 
+           vehicle-hours traveled (VHT), and emissions data for the 97 cities and towns in the Boston Region Metropolitan Planning Organization (MPO). 
+           The data are for the 2016 base year and 2040 future year. CTPS modeled these data for the publication, Destination 2040, which is the current 
+           Long-Range Transportation Plan (LRTP) for the Boston region. 
+           The future-year scenarios include proposed key regional transportation projects identified in the plan (see                    
+			<a href="https://www.ctps.org/data/pdf/plans/LRTP/destination/Destination-2040-LRTP-DRAFT-072519.pdf"/>
+				https://www.ctps.org/data/pdf/plans/LRTP/destination/Destination-2040-LRTP-DRAFT-072519.pdf
 			</a>
-			,pages 5-11 to 5-13). These data are presented by vehicle type (single-occupancy vehicles, high-occupancy
-			vehicles, and trucks) and by time period (6:00 AM to 9:00 AM, 9:00 AM to 3:00 PM, 3:00 PM to 6:00 PM, 
-			and 6:00 PM to 6:00 AM). The definitions of single- and high-occupancy vehicles are self-evident. The 
-			truck category includes commercial trucks of many types, such as trailer trucks, hazardous materials 
-			trucks, and box trucks; but it does not include passenger pickups and sports utility vehicles (SUV), 
-			which would fall under the single- and high-occupancy vehicle categories. 
+			, pages 4-11 to 4-12). 
 		</p>
-		<p>The emissions data for 2009 that previously was posted on this website was for the base year of the prior 
-			LRTP, Paths to a Sustainable Region. The MPO adopts new LRTPs every four years; and in some cases, emissions 
-			data for the latest LRTP is drastically different from the data in the previously published plan. These 
-			differences are based on a couple of factors. The base year data are different simply because they pertain to 
-			travel from different base years—2012 versus 2009. More significantly though, the software used to estimate 
-			mobile emissions has changed. The previous plan employed a software program known as MOBILE, while the latest 
-			plan uses a program called MOVES. These programs have resulted in significantly different—and improved—emissions 
-			estimates.  
+		<p>
+        The MPO adopts a new LRTP every four years. For a variety of reasons there can be differences in the regional emissions from one LRTP to another.  
+        A significant source of potential change is from changes in travel patterns over time. The base year in the previous plan was 2012, 
+        the base year for Destination 2040 is 2016. 
+        Travel in 2016 is different from travel in 2012because the land use inputs fed into the model are different. 
+        Another source of change in regional emissions estimates could be from changes in the model structure itself. 
+        For example, the regional model in 2012 only included eastern Massachusetts whereas the model used for the 2016 LRTP included all of Massachusetts, 
+        Rhode Island and some of New Hampshire. 
 		</p>
-		<p>You may download the data in a comma-separated values (CSV) format, which popular spreadsheet programs, 
-			such as Microsoft Excel and Apache Open Office Calc, can read.
+		<p>You may download the data in a comma-separated values (CSV) format, which popular spreadsheet programs, such as Microsoft Excel and Apache Open Office Calc, can read.
 		</p>
 		<h3>Using the Application</h3>
 		<p>This application allows you to query and display data in five ways:
 			<ol>
 				<li>
-					You may get VMT, VHT, and emissions data for a particular town or city by selecting a municipality in 
-					the “Select a Municipality” combo box. The selected municipality is outlined in red on the map, and 
-					the data for it is displayed in the tabbed panel on the right side of the application window.
+				You may get VMT, VHT, and emissions data for a particular town or city by selecting a municipality in the “Select a Municipality” combo box. 
+                The selected municipality is outlined in red on the map, and the data for it is displayed in the tabbed panel on the right side of the application window.	
 				</li>
 				<li>
-					You also may obtain VMT, VHT, and emissions data for a particular town or city by clicking on a 
-					municipality within the map. The selected municipality is outlined in red on the map, and the data 
-					for it is displayed in the tabbed panel on the right side of the application window.
+				You also may obtain VMT, VHT, and emissions data for a particular town or city by clicking on a municipality within the map. 
+                The selected municipality is outlined in red on the map, and the data for it is displayed in the tabbed panel on the right side of the application window.	
 				</li>
 				<li>
-					You may display the map’s theme by selecting a theme (such as vehicle-miles traveled) from the 
-					“Select Map Theme” combo box.
+				You may display the map’s theme by selecting a theme (such as vehicle-miles traveled) from the “Select Map Theme” combo box.	
 				</li>
 				<li>
-					You also may display the map’s theme by changing the tabbed panel on the right side of the application 
-					window. Switching tabs displays the panel’s selected theme (such as vehicle-miles traveled).
+				You also may display the map’s theme by changing the tabbed panel on the right side of the application window. 
+                Switching tabs displays the panel’s selected theme (such as vehicle-miles traveled).	
 				</li>
 				<li>
-					You may change the year of modeled data displayed by selecting a year from the “Display Year” combo box. 
-					The available years are the 2012 base year, 2020 future year, and 2040 future year, with the 2012 base 
-					year as the default.
+				You may change the year of modeled data displayed by selecting a year from the “Display Year” combo box. 
+                The available years are the 2016 base year, and 2040 future year, with the 2016 base year as the default.	
 				</li>
 			</ol>
 		</p>
@@ -138,454 +136,71 @@
 			</ol>
 		</p>
 		<h3>Description of Database Fields</h3>
-		<p>When the data is downloaded as a CSV file, it contains 80 columns (fields). The meaning of the data in 
-			these fields is displayed below:
-		</p>
 		<p>
-			<table>
-				<tr style="font-size: 1.1em">
-					<th></th>
-					<th>Data Name</th> 
-					<th>Description</th>
-				</tr>
-				<tr>
-					<td>1</td>
-					<td>TOWN_ID</td>
-					<td>Town identification number</td>
-				</tr>
-				<tr>
-					<td>2</td>
-					<td>TOWN</td> 
-					<td>Name of town or city</td>
-				</tr>
-				
-				<tr>
-					<th colspan="3" class="th_section">Modeled Vehicle-Miles Traveled:</th>
-				</tr>
-				<tr>
-					<td>3</td>
-					<td>VMT_SOV_AM</td> 
-					<td>Modeled VMT by SOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>4</td>
-					<td>VMT_SOV_MD</td> 
-					<td>Modeled VMT by SOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>5</td>
-					<td>VMT_SOV_PM</td> 
-					<td>Modeled VMT by SOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>6</td>
-					<td>VMT_SOV_NT</td> 
-					<td>Modeled VMT by SOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>7</td>
-					<td>VMT_HOV_AM</td> 
-					<td>Modeled VMT by HOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>8</td>
-					<td>VMT_HOV_MD</td> 
-					<td>Modeled VMT by HOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>9</td>
-					<td>VMT_HOV_PM</td> 
-					<td>Modeled VMT by HOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>10</td>
-					<td>VMT_HOV_NT</td> 
-					<td>Modeled VMT by HOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>11</td>
-					<td>VMT_TRK_AM</td> 
-					<td>Modeled VMT by trucks between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>12</td>
-					<td>VMT_TRK_MD</td> 
-					<td>Modeled VMT by trucks between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>13</td>
-					<td>VMT_TRK_PM</td> 
-					<td>Modeled VMT by trucks between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>14</td>
-					<td>VMT_TRK_NT</td> 
-					<td>Modeled VMT by trucks between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>15</td>
-					<td>VMT_TOTAL</td> 
-					<td>Total modeled VMT per Day</td>
-				</tr>
-
-				<tr>
-					<th colspan="3" class="th_section">Modeled Vehicle-Hours Traveled:</th>
-				</tr>				
-				<tr>
-					<td>16</td>
-					<td>VHT_SOV_AM</td> 
-					<td>Modeled VHT by SOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>17</td>
-					<td>VHT_SOV_MD</td> 
-					<td>Modeled VHT by SOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>18</td>
-					<td>VHT_SOV_PM</td> 
-					<td>Modeled VHT by SOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>19</td>
-					<td>VHT_SOV_NT</td> 
-					<td>Modeled VHT by SOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>20</td>
-					<td>VHT_HOV_AM</td> 
-					<td>Modeled VHT by HOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>21</td>
-					<td>VHT_HOV_MD</td> 
-					<td>Modeled VHT by HOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>22</td>
-					<td>VHT_HOV_PM</td> 
-					<td>Modeled VHT by HOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>23</td>
-					<td>VHT_HOV_NT</td> 
-					<td>Modeled VHT by HOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>24</td>
-					<td>VHT_TRK_AM</td> 
-					<td>Modeled VHT by trucks between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>25</td>
-					<td>VHT_TRK_MD</td> 
-					<td>Modeled VHT by trucks between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>26</td>
-					<td>VHT_TRK_PM</td> 
-					<td>Modeled VHT by trucks between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>27</td>
-					<td>VHT_TRK_NT</td> 
-					<td>Modeled VHT by trucks between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>28</td>
-					<td>VHT_TOTAL</td> 
-					<td>Total modeled VHT per Day</td>
-				</tr>
-
-				<tr>
-					<th colspan="3" class="th_section">Modeled Grams of Volatile Organic Compounds Emitted:</th>
-				</tr>
-				<tr>
-					<td>29</td>
-					<td>VOC_SOV_AM</td> 
-					<td>Modeled VOC by SOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>30</td>
-					<td>VOC_SOV_MD</td> 
-					<td>Modeled VOC by SOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>31</td>
-					<td>VOC_SOV_PM</td> 
-					<td>Modeled VOC by SOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>32</td>
-					<td>VOC_SOV_NT</td> 
-					<td>Modeled VOC by SOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>33</td>
-					<td>VOC_HOV_AM</td> 
-					<td>Modeled VOC by HOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>34</td>
-					<td>VOC_HOV_MD</td> 
-					<td>Modeled VOC by HOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>35</td>
-					<td>VOC_HOV_PM</td> 
-					<td>Modeled VOC by HOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>36</td>
-					<td>VOC_HOV_NT</td> 
-					<td>Modeled VOC by HOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>37</td>
-					<td>VOC_TRK_AM</td> 
-					<td>Modeled VOC by trucks between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>38</td>
-					<td>VOC_TRK_MD</td> 
-					<td>Modeled VOC by trucks between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>39</td>
-					<td>VOC_TRK_PM</td> 
-					<td>Modeled VOC by trucks between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>40</td>
-					<td>VOC_TRK_NT</td> 
-					<td>Modeled VOC by trucks between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>41</td>
-					<td>VOC_TOTAL</td> 
-					<td>Total modeled VOC per Day</td>
-				</tr>
-
-				<tr>
-					<th colspan="3" class="th_section">Modeled Grams of Nitrogen Oxides Emitted:</th>
-				</tr>
-				<tr>
-					<td>42</td>
-					<td>NOX_SOV_AM</td> 
-					<td>Modeled NOX by SOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>43</td>
-					<td>NOX_SOV_MD</td> 
-					<td>Modeled NOX by SOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>44</td>
-					<td>NOX_SOV_PM</td> 
-					<td>Modeled NOX by SOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>45</td>
-					<td>NOX_SOV_NT</td> 
-					<td>Modeled NOX by SOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>46</td>
-					<td>NOX_HOV_AM</td> 
-					<td>Modeled NOX by HOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>47</td>
-					<td>NOX_HOV_MD</td> 
-					<td>Modeled NOX by HOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>48</td>
-					<td>NOX_HOV_PM</td> 
-					<td>Modeled NOX by HOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>49</td>
-					<td>NOX_HOV_NT</td> 
-					<td>Modeled NOX by HOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>50</td>
-					<td>NOX_TRK_AM</td> 
-					<td>Modeled NOX by trucks between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>51</td>
-					<td>NOX_TRK_MD</td> 
-					<td>Modeled NOX by trucks between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>52</td>
-					<td>NOX_TRK_PM</td> 
-					<td>Modeled NOX by trucks between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>53</td>
-					<td>NOX_TRK_NT</td> 
-					<td>Modeled NOX by trucks between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>54</td>
-					<td>NOX_TOTAL</td> 
-					<td>Total modeled NOX per Day</td>
-				</tr>
-
-				<tr>
-					<th colspan="3" class="th_section">Modeled Grams of Carbon Monoxide Emitted:</th>
-				</tr>
-				<tr>
-					<td>55</td>
-					<td>CO_SOV_AM</td> 
-					<td>Modeled CO by SOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>56</td>
-					<td>CO_SOV_MD</td> 
-					<td>Modeled CO by SOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>57</td>
-					<td>CO_SOV_PM</td> 
-					<td>Modeled CO by SOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>58</td>
-					<td>CO_SOV_NT</td> 
-					<td>Modeled CO by SOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>59</td>
-					<td>CO_HOV_AM</td> 
-					<td>Modeled CO by HOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>60</td>
-					<td>CO_HOV_MD</td> 
-					<td>Modeled CO by HOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>61</td>
-					<td>CO_HOV_PM</td> 
-					<td>Modeled CO by HOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>62</td>
-					<td>CO_HOV_NT</td> 
-					<td>Modeled CO by HOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>63</td>
-					<td>CO_TRK_AM</td> 
-					<td>Modeled CO by trucks between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>64</td>
-					<td>CO_TRK_MD</td> 
-					<td>Modeled CO by trucks between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>65</td>
-					<td>CO_TRK_PM</td> 
-					<td>Modeled CO by trucks between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>66</td>
-					<td>CO_TRK_NT</td> 
-					<td>Modeled CO by trucks between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>67</td>
-					<td>CO_TOTAL</td> 
-					<td>Total modeled CO per Day</td>
-				</tr>
-
-				<tr>
-					<th colspan="3" class="th_section">Modeled Grams of Carbon Dioxide Emitted:</th>
-				</tr>
-				<tr>
-					<td>68</td>
-					<td>CO2_SOV_AM</td> 
-					<td>Modeled CO2 by SOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>69</td>
-					<td>CO2_SOV_MD</td> 
-					<td>Modeled CO2 by SOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>70</td>
-					<td>CO2_SOV_PM</td> 
-					<td>Modeled CO2 by SOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>71</td>
-					<td>CO2_SOV_NT</td> 
-					<td>Modeled CO2 by SOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>72</td>
-					<td>CO2_HOV_AM</td> 
-					<td>Modeled CO2 by HOV between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>73</td>
-					<td>CO2_HOV_MD</td> 
-					<td>Modeled CO2 by HOV between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>74</td>
-					<td>CO2_HOV_PM</td> 
-					<td>Modeled CO2 by HOV between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>75</td>
-					<td>CO2_HOV_NT</td> 
-					<td>Modeled CO2 by HOV between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>76</td>
-					<td>CO2_TRK_AM</td> 
-					<td>Modeled CO2 by trucks between 6:00 AM and 9:00 AM</td>
-				</tr>
-				<tr>
-					<td>77</td>
-					<td>CO2_TRK_MD</td> 
-					<td>Modeled CO2 by trucks between 9:00 AM and 3:00 PM</td>
-				</tr>
-				<tr>
-					<td>78</td>
-					<td>CO2_TRK_PM</td> 
-					<td>Modeled CO2 by trucks between 3:00 PM and 6:00 PM</td>
-				</tr>
-				<tr>
-					<td>79</td>
-					<td>CO2_TRK_NT</td> 
-					<td>Modeled CO2 by trucks between 6:00 PM and 6:00 AM</td>
-				</tr>
-				<tr>
-					<td>80</td>
-					<td>CO2_TOTAL</td> 
-					<td>Total modeled CO2 per Day</td>
-				</tr>
-			</table>
-			<span>
-				CO2 = Carbon dioxide. 
-				CO = Carbon monoxide. 
-				HOV = High-occupancy vehicles. 
-				NOX = Nitrogen oxide. 
-				SOV = Single-occupancy vehicles. 
-				VMT = Vehicle-miles traveled. 
-				VHT = Vehicle-hours traveled. 
-				VOC = Volatile organic compounds.
-			</span>
+        The data presented in here is for an average weekday ,for all vehicle types combined (auto and trucks).
+        The air quality results shown are combined total of Interzonal (between different TAZs) and Intrazonal (within same TAZ) activities.
 		</p>
+        <p>
+        When the data is downloaded as a CSV file, it contains 8 columns (fields). The meaning of the data in these fields is displayed below:
+        </p>
+        
+        <p>      
+            <table>
+                <thead>
+                    <tr class="tr_header">
+                        <th>Column Name</th> 
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tr>
+                    <td>TOWN_ID</td>
+                    <td>Town identification number</td>
+                </tr>
+                <tr>
+                    <td>TOWN</td> 
+                    <td>Name of town or city</td>
+                </tr>               
+                <tr>
+                    <td>VMT_TOTAL</td> 
+                    <td>Total modeled VMT (miles) per Day</td>
+                </tr>               
+                <tr>
+                    <td>VHT_TOTAL</td> 
+                    <td>Total modeled VHT (hours) per Day</td>
+                </tr>               
+                <tr>
+                    <td>VOC_TOTAL</td> 
+                    <td>Total Modeled Kilograms of VOC Emitted per Day</td>
+                </tr>
+                <tr>
+                    <td>NOX_TOTAL</td> 
+                    <td>Total Modeled Kilograms of NOx Emitted per Day</td>
+                </tr>           
+                <tr>
+                    <td>CO_TOTAL</td> 
+                    <td>Total Modeled Kiograms of CO Emitted per Day</td>
+                </tr>               
+                <tr>
+                    <td>CO2_TOTAL</td> 
+                    <td>Total Modeled Kilograms of CO<sub>2</sub> Emitted per Day</td>
+                </tr>
+            </table>
+        </p>
+        <p>
+            <span>
+                CO2 = Carbon dioxide. 
+                CO = Carbon monoxide. 
+                HOV = High-occupancy vehicles. 
+                NOX = Nitrogen oxide. 
+                SOV = Single-occupancy vehicles. 
+                VMT = Vehicle-miles traveled. 
+                VHT = Vehicle-hours traveled. 
+                VOC = Volatile organic compounds.
+            </span>      
+		</p>
+        
 		<div id="closeLink">
-			<a href="http://www.ctps.org/geoserver/www/apps/vmtApp/index.html" class="button"
+			<a href="https://www.ctps.org/dv/vmtApp/index.html" class="button"
 			onclick="return targetopener(this,true,true)" >Close Help Window</a>   
 		</div>			<!--   END OF CLOSELINK  -->
 		</div>          <!--   END OF BIGBOX    -->
