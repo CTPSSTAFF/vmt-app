@@ -70,8 +70,7 @@
 					<div id="year_dropdown">
 						<h2>Display Year:</h2>
 						<select id="display_year" title="Select Year" tabindex="10">
-							<option value=2012>2012 Base Year</option>
-							<option value=2020>2020 Future Year</option>
+							<option value=2016 selected>2016 Base Year</option>
 							<option value=2040>2040 Future Year</option>
 						</select>
 					</div>
@@ -85,22 +84,16 @@
 			<!--	end 'left_container'   -->
 
 			<div id="right_container" role="application">
-				<h2>Display Data Table for One Municipality:</h2>
+                <h2>Display Data Table for One Municipality:</h2>
 				<div id='town_dropdown'>
 					<select id="selected_town" title="Select a municipality" tabindex="20">
 						<option value="">Select A Municipality</option>
 					</select>
 				</div>
-				<!--	end 'comboBank' div  -->
-
 				<div id='buttonBank'>
-					<span id="download_button_2012">
-						<input type="button" id="download_data" tabindex="35" value="Download Data - 2012" />
-						<a id="downloadAnchorTag" href="https://ctps.org/pub/VMT_and_Emissions_Data/CTPS_TOWNS_MAPC_VMT_2012.xls"></a>
-					</span>
-					<span id="download_button_2020">
-						<input type="button" id="download_data" tabindex="35" value="Download Data - 2020" />
-						<a id="downloadAnchorTag" href="https://ctps.org/pub/VMT_and_Emissions_Data/CTPS_TOWNS_MAPC_VMT_2020.xls"></a>
+					<span id="download_button_2016">
+						<input type="button" id="download_data" tabindex="35" value="Download Data - 2016" />
+						<a id="downloadAnchorTag" href="https://ctps.org/pub/VMT_and_Emissions_Data/CTPS_TOWNS_MAPC_VMT_2016.xls"></a>
 					</span>
 					<span id="download_button_2040">
 						<input type="button" id="download_data" tabindex="35" value="Download Data - 2040" />
@@ -115,42 +108,18 @@
 				</div>
 				<!--	end  'buttonBank div   -->
 				
-				<div id="mytabs" class="tabs hidden">
-					<h2 id="vmt">VMT</h2>
+				<div id="mytabs" class="tabs"> <!-- was: class="tabs hidden" -->
+					<h2 id="data_2016">2016</h2>
 						<div class="tabbody">
 							<div id="tabs-1">
-								<div id="vmt_grid"></div>
+								<div id="grid_2016"></div>
 							</div>
 						</div>
-					<h2 id="vht">VHT</h2>
+					<h2 id="dat_2040">2040</h2>
 						<div class="tabbody">
 						   <div id="tabs-2">
-								<div id="vht_grid"></div>
+								<div id="grid_2040"></div>
 							</div> 
-						</div>
-					<h2 id="voc">VOC</h2>
-						<div class="tabbody">
-							<div id="tabs-3">
-								<div id="voc_grid"></div>
-							</div>
-						</div>
-					<h2 id="nox">NOX</h2>
-						<div class="tabbody">
-							<div id="tabs-4">
-								<div id="nox_grid"></div>
-							</div>
-						</div>	
-					<h2 id="co">CO</h2>
-						<div class="tabbody">
-							<div id="tabs-5">
-								<div id="co_grid"></div>
-							</div>
-						</div>
-					<h2 id="co2">CO2</h2>
-						<div class="tabbody">
-							<div id="tabs-6">
-								<div id="co2_grid"></div>
-							</div>
 						</div>			
 				</div>
 				<!--    end 'mytabs'  -->

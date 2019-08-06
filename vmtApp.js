@@ -6,8 +6,10 @@
  *		traveled (VMT), vehicle hours traveled (VHT), and emissions data for the 101 cities 
  *		and towns in the Boston Region Metropolitan Planning Organization (MPO).
  *
- *	Last update:
- *		09/2017 -- EKE
+ *  Latest update:
+ *      08/2019 -- Ben Krepp
+ *	Previout update:
+ *		09/2017 -- Ethan Ebinger
  *	
  *	Data sources: 
  *		1) Central Transportation Planning Staff of the Boston Region Metropolitan Planning Organization
@@ -24,35 +26,304 @@
  *		8) ctpsutils -- custom library with arrays of towns in MPO region and in MA
  *	
  */
+  
+var CTPS = {};
+CTPS.vmtApp = {};
 
+// Data sources
+var MPO_towns = "data/MA_TOWNS_MPO97.json";
+var MA_outline = "data/MA_TOWNS_NON_MPO97.json";
+var csvData_2016 = "data/CTPS_TOWNS_MAPC_97_VMT_2016.csv";
+var csvData_2040 = "data/CTPS_TOWNS_MAPC_97_VMT_2040.csv";
+
+// Data loaded by app
+CTPS.vmtApp.tabularData_2016 = {};
+CTPS.vmtApp.tabularData_2040 = {};
+CTPS.vmtApp.geoData_2016  = {};
+CTPS.vmtApp.geoData_2040  = {};
+
+// Data "stores" for the accessible grids - really just arrays of objects (key/value pairs).
+CTPS.vmtApp.store_2016 = [];
+CTPS.vmtApp.store_2040 = [];
+
+// Array of map themes
+CTPS.vmtApp.themes = ["THEME_VMT", "THEME_VHT", "THEME_VOC", "THEME_NOX", "THEME_CO",  "THEME_CO2" ];
+
+// Lookup Table for Map and Legend palettes, text
+// Domains emperically split on approximatley the 25th, 50th, and 75th percentile values -- for 2012 data
+CTPS.vmtApp.themesLookup = {	
+    "THEME_VMT": {	"threshold": d3.scaleThreshold()
+                                    .domain([230000, 560000, 920000])
+                                    .range(["#febfdc", "#fe80b9", "#d62e6c", "#a10048"]),
+                    "mapTheme": "Vehicle Miles Traveled",
+                    "total": "VMT_TOTAL",
+                    "legendTheme": "Daily total of modeled vehicle miles traveled (VMT), per municipality.",
+                    "legendText": ["< 230,000 miles", "230,000-560,000 miles", "560,000-920,000 miles", "> 920,000 miles"],
+                    "legendDomain": [0, 300000, 700000, 2000000],
+                    "legendRange": ["#febfdc", "#fe80b9", "#d62e6c", "#a10048"],
+                    "tabSelect": "#vmt"
+                },
+    "THEME_VHT": {	"threshold": d3.scaleThreshold()
+                                    .domain([7000, 16000, 28000])
+                                    .range(["#d4ffd4", "#a9d6a8", "#53ad51", "#1d6b1b"]),
+                    "mapTheme": "Vehicle Hours Traveled",
+                    "total": "VHT_TOTAL",
+                    "legendTheme": "Daily total of modeled vehicle hours traveled (VHT), per municipality.",
+                    "legendText": ["< 7,000 hours","7,000-16,000 hours", "16,000-28,000 hours", "> 28,000 hours"],
+                    "legendDomain": [0, 10000, 20000, 30000],
+                    "legendRange": ["#d4ffd4", "#a9d6a8", "#53ad51", "#1d6b1b"],
+                    "tabSelect": "#vht"
+                },
+    "THEME_VOC": {	"threshold": d3.scaleThreshold()
+                                    .domain([25, 60, 100])
+                                    .range(["#FEF7E7", "#E79484", "#BD4A39", "#8C0808"]),
+                    "mapTheme": "Volatile Organic Compounds",
+                    "total": "VOC_TOTAL",
+                    "legendTheme": "Daily total of modeled grams of volatile organic compounds (VOC) emitted, per municipality.",
+                    "legendText":  ["< 25 grams", "25-60 grams", "60-100 grams", "> 100 grams"], 
+                    "legendDomain": [0, 30, 70, 200],
+                    "legendRange": ["#FEF7E7", "#E79484", "#BD4A39", "#8C0808"],
+                    "tabSelect": "#voc"
+                },
+    "THEME_NOX": {	"threshold": d3.scaleThreshold()
+                                    .domain([150, 350, 600])
+                                    .range(["#e7fec8", "#cffe91", "#86d51e", "#5e9515"]),
+                    "mapTheme": "Nitrogen Oxides",
+                    "total": "NOX_TOTAL",
+                    "legendTheme": "Daily total of modeled grams of nitrogen oxides (NOX) emitted, per municipality.",
+                    "legendText": ["< 150 grams", "150-350 grams", "350-600 grams", "> 600 grams"],
+                    "legendDomain": [0, 200, 400, 2500],
+                    "legendRange": ["#e7fec8", "#cffe91", "#86d51e", "#5e9515"],
+                    "tabSelect": "#nox"
+                },
+    "THEME_CO" : {	"threshold": d3.scaleThreshold()
+                                    .domain([700, 1700, 3000])
+                                    .range(["#bffffe", "#80fffe", "#0fb3bc", "#006b6b"]),
+                    "mapTheme": "Carbon Monoxide",
+                    "total": "CO_TOTAL",
+                    "legendTheme": "Daily total of modeled grams of carbon monoxide (CO) emitted, per municipality.",
+                    "legendText": ["< 700 grams", "700-1,700 grams", "1,700-3,000 grams", "> 3,000 grams"],
+                    "legendDomain": [0, 1000, 2000, 3500],
+                    "legendRange": ["#bffffe", "#80fffe", "#0fb3bc", "#006b6b"],
+                    "tabSelect": "#co"
+                },
+    "THEME_CO2": {	"threshold": d3.scaleThreshold()
+                                    .domain([100000, 250000, 500000])
+                                    .range(["#ecd9fe", "#d9b3f3", "#824aba", "#5b3482"]),
+                    "mapTheme": "Carbon Dioxide",
+                    "total": "CO2_TOTAL",
+                    "legendTheme": "Daily total of modeled grams of carbon dioxide (CO2) emitted, per municipality.",
+                    "legendText": ["< 100,000 grams", "100,000-250,000 grams", "250,000-500,000 grams", "> 500,000 grams"],
+                    "legendDomain": [0, 200000, 450000, 2000000],
+                    "legendRange": ["#ecd9fe", "#d9b3f3", "#824aba", "#5b3482"], 
+                    "tabSelect": "#co2"
+                }
+};
+
+//////////////////////////////////////////////////////////////////////////////////////
+//  Utility Functions
+//	
+// Function to open URL in new window -- used for "Help Button"
+function popup(url) {
+    popupWindow = window.open(url,'popUpWindow','height=700,width=800,left=10,top=10,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no,status=yes');
+}
+//Functions to Hide/Unhide Tabs -- exists this way to remove individual class names if multiple exist
+function hideTab() {
+    var e = document.getElementById('mytabs');
+    e.className += ' hidden';
+}
+function unhideTab() {
+    var e = document.getElementById('mytabs');
+    e.className = e.className.replace(/hidden/gi,"");
+}
+// Function to capitalize only first letter of Town names
+// https://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript/196991#196991
+function toTitleCase(str) {
+    return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+}
+// Function to rearrage data array (needed for hover-highlighting b/c internal data order messed up 
+// when you bring the selected town to the front of the SVG -- this corrects that bug)
+// https://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another
+Array.prototype.move = function (old_index, new_index) {
+    if (new_index >= this.length) {
+        var k = new_index - this.length;
+        while ((k--) + 1) {
+            this.push(undefined);
+        }
+    }
+    this.splice(new_index, 0, this.splice(old_index, 1)[0]);
+    return this; // for testing purposes
+}
+
+
+CTPS.vmtApp.data = {};          // probably fossil
+CTPS.vmtApp.currentTown = '';  
+CTPS.vmtApp.csvData = '';       // probably fossil
+
+
+    
 function vmtAppInit() {
-	
-	var CTPS = {};
-	CTPS.vmtApp = {};
-	CTPS.vmtApp.data = {};
-	CTPS.vmtApp.currentTown = '';
-	
+    // Initialize accessible tabs
+    $('.tabs').accessibleTabs();
+    // On-click event handler for Help button
+    $('#help_button').click(function(e) {
+        popup(helpData);
+    });
+    // On-click event handler for Download buttons
+    $('#download_button_2016, #download_button_2040').each(function() { 
+        $(this).click(function() {
+            window.location = $(this).find('a').attr('href');
+        });	
+    });
+	// Populate "Select Map Theme" combo box
+	for (i = 0; i < CTPS.vmtApp.themes.length; i++) {
+		$("#selected_theme").append(
+			$("<option />")
+				.val(CTPS.vmtApp.themes[i])
+				.text(CTPS.vmtApp.themesLookup[CTPS.vmtApp.themes[i]]["mapTheme"])
+		);
+	}
+	// Populate "Select A Municipality" combo box
+	for (i = 0; i < CTPSUTILS.aMpoTowns.length; i++) {
+		$("#selected_town").append(
+			$("<option />")
+				.val(CTPSUTILS.aMpoTowns[i][0])
+				.text(toTitleCase(CTPSUTILS.aMpoTowns[i][1]))
+		);
+	}
+    
+    
 	//////////////////////////////////////////////////////////////////////////////////////
 	//
-	//	0)	Constants, definitions, and lookup tables
+	// Load data
 	//
 	//////////////////////////////////////////////////////////////////////////////////////
-	// Files to be loaded by App
-	var jsonData = "data_old/MA_TOWNS_MPO101.json";
-	var MAoutline = "data_old/MA_TOWNS_NON_MPO101.json";
-	CTPS.vmtApp.csvData = '';
-	var csvData_2012 = "data_old/CTPS_TOWNS_MAPC_VMT_2012.csv";
-	var csvData_2020 = "data_old/CTPS_TOWNS_MAPC_VMT_2020.csv";
-	var csvData_2040 = "data_old/CTPS_TOWNS_MAPC_VMT_2040.csv";
-	/*
-	//FOR SWITCH TO 97 TOWNS - EKE 11/2017
-	var jsonData = "data/MA_TOWNS_MPO97.json";
-	var MAoutline = "data/MA_TOWNS_NON_MPO97.json";
-	CTPS.vmtApp.csvData = '';
-	var csvData_2012 = "data/CTPS_TOWNS_MAPC_97_VMT_2012.csv";
-	var csvData_2020 = "data/CTPS_TOWNS_MAPC_97_VMT_2020.csv";
-	var csvData_2040 = "data/CTPS_TOWNS_MAPC_97_VMT_2040.csv";
-	//*/
+    
+ 
+    var q = d3.queue()
+            .defer(d3.json, MPO_towns)          // OK
+            .defer(d3.json, MA_outline)         // OK
+            .defer(d3.csv, csvData_2016)        // OK
+            .defer(d3.csv, csvData_2040)
+            .awaitAll(function(error, results) { 
+                if (error !== null) {
+                    alert('Failure loading JSON or CSV file.\n' +
+                          'Status: ' + error.status + '\n' +
+                          'Status text: ' + error.statusText + '\n' +
+                          'URL :' + error.responseURL);
+                    return;
+                }                   
+                var topoTowns = results[0];
+                var topoOutline = results[1];                    
+                CTPS.vmtApp.tabularData_2016 = results[2];
+                CTPS.vmtApp.tabularData_2040 = results[3]; 
+
+                // *** Process tabular data loaded
+                
+                function parseCSV(rec) {
+                    rec.VMT_TOTAL = +rec.VMT_TOTAL;
+                    rec.VHT_TOTAL = +rec.VHT_TOTAL;
+                    rec.VOC_TOTAL = +rec.VOC_TOTAL;
+                    rec.NOX_TOTAL = +rec.NOX_TOTAL;
+                    rec.CO_TOTAL  = +rec.CO_TOTAL;
+                    rec.CO2_TOTAL = +rec.CO2_TOTAL;
+                } // parseCSV()
+                
+                CTPS.vmtApp.tabularData_2016.forEach(parseCSV);
+                CTPS.vmtApp.tabularData_2040.forEach(parseCSV);
+                
+                // Load data stores for accessible grids
+                
+                CTPS.vmtApp.store_2016 = [];
+                var i;
+                for (i = 0; i < CTPS.vmtApp.tabularData_2016.length; i ++) {                   
+                    CTPS.vmtApp.store_2016[i] = {   'TOWN'  :    CTPS.vmtApp.tabularData_2016[i].TOWN,                              
+                                                    'VMT'   :   (+CTPS.vmtApp.tabularData_2016[i].VMT_TOTAL.toFixed(0)).toLocaleString(),
+                                                    'VHT'   :   (+CTPS.vmtApp.tabularData_2016[i].VHT_TOTAL.toFixed(0)).toLocaleString(),
+                                                    'VOC'   :   (+CTPS.vmtApp.tabularData_2016[i].VOC_TOTAL.toFixed(0)).toLocaleString(),
+                                                    'NOX'   :   (+CTPS.vmtApp.tabularData_2016[i].NOX_TOTAL.toFixed(0)).toLocaleString(),
+                                                    'CO'    :   (+CTPS.vmtApp.tabularData_2016[i].CO_TOTAL.toFixed(0)).toLocaleString(),
+                                                    'CO2'   :   (+CTPS.vmtApp.tabularData_2016[i].CO2_TOTAL.toFixed(0)).toLocaleString() };
+                }
+                CTPS.vmtApp.store_2040 = [];
+                for (i = 0; i < CTPS.vmtApp.tabularData_2040.length; i ++) {                   
+                    CTPS.vmtApp.store_2040[i] = {   'TOWN'  :    CTPS.vmtApp.tabularData_2040[i].TOWN,                               
+                                                    'VMT'   :   (+CTPS.vmtApp.tabularData_2040[i].VMT_TOTAL.toFixed(0)).toLocaleString(),
+                                                    'VHT'   :   (+CTPS.vmtApp.tabularData_2040[i].VHT_TOTAL.toFixed(0)).toLocaleString(),
+                                                    'VOC'   :   (+CTPS.vmtApp.tabularData_2040[i].VOC_TOTAL.toFixed(0)).toLocaleString(),
+                                                    'NOX'   :   (+CTPS.vmtApp.tabularData_2040[i].NOX_TOTAL.toFixed(0)).toLocaleString(),
+                                                    'CO'    :   (+CTPS.vmtApp.tabularData_2040[i].CO_TOTAL.toFixed(0)).toLocaleString(),
+                                                    'CO2'   :   (+CTPS.vmtApp.tabularData_2040[i].CO2_TOTAL.toFixed(0)).toLocaleString() };
+                }                
+                
+                
+                // Create accessible grids and populate them with data in the data stores
+                var colDesc = [ { header : 'Municipality', 		dataIndex : 'TOWN' }, 
+                                { header : 'VMT', 	dataIndex : 'VMT' }, 
+                                { header : 'VHT', 	dataIndex : 'VHT' }, 
+                                { header : 'VOC', 	dataIndex : 'VOC' },
+                                { header : 'NOX', 	dataIndex : 'NOX' },
+                                { header : 'CO', 	dataIndex : 'CO'  },
+                                { header : 'CO2', 	dataIndex : 'CO2' },
+                                ]; 
+
+                CTPS.vmtApp.grid_2016 = new AccessibleGrid( { divId 	:	'grid_2016',
+                                                            tableId 	:	'table_2016',
+                                                            summary		: 	'Table columns are town name, total VMT, total VHT, total VOC emissions, total NOX emissions, total CO emissions, and total CO2 emissions.',
+                                                            caption		:	'Data for 2016',
+                                                            ariaLive	:	'assertive',
+                                                            colDesc		: 	colDesc
+                                                });								
+                CTPS.vmtApp.grid_2016.loadArrayData(CTPS.vmtApp.store_2016);
+
+                CTPS.vmtApp.grid_2040 = new AccessibleGrid( { divId 	:	'grid_2040',
+                                                            tableId 	:	'table_2040',
+                                                            summary		: 	'Table columns are town name, total VMT, total VHT, total VOC emissions, total NOX emissions, total CO emissions, and total CO2 emissions.',
+                                                            caption		:	'Data for 2040',
+                                                            ariaLive	:	'assertive',
+                                                            colDesc		: 	colDesc
+                                                });								
+                CTPS.vmtApp.grid_2040.loadArrayData(CTPS.vmtApp.store_2016);                                
+                
+                
+                
+                
+                 var _DEBUG_HOOK_0 = 0;
+                // *** Process spatial data loaded
+                
+                // Make a 'deep' copy of topoTowns
+                var topoTowns2 = Object.assign({}, topoTowns);
+                
+                function joinGeoWithTabular(towns,tabular) {
+                    var i, j;
+                    for (i = 0; i < towns.length; i++) {
+                        for (j = 0; j < tabular.length; j++) {
+                            if (+towns[i].properties.TOWN_ID === +tabular[j].TOWN_ID) {
+                                towns[i].properties = tabular[j];
+                            }
+                        }
+                    };                      
+                } // joinGeoWithTabular()
+                
+                joinGeoWithTabular(topoTowns, CTPS.vmtApp.tabularData_2016);
+                CTPS.vmtApp.geoData_2016 = topoTowns;
+                joinGeoWithTabular(topoTowns2, CTPS.vmtApp.tabularData_2040);
+                CTPS.vmtApp.geoData_2040 = topoTowns2;
+                                     
+                CTPS.vmtApp.topoOutline = topojson.feature(topoOutline, topoOutline.objects.MA_TOWNS_NON_MPO97).features;
+                
+                var _DEBUG_HOOK_1 = 0;
+                
+                
+                
+            }); // q.awaitAll()    
+    
+    
+    
+    
+    
+    
+   ///////////////////////////////////////////////////////////// 
 	
 	var helpData = "vmtAppHelp.html";
 	
@@ -64,474 +335,59 @@ function vmtAppInit() {
 		legend_height = 120,
 		legendRectSize = 16,
 		legendSpacing = 4;
-	
-	// Array of map themes
-	CTPS.vmtApp.themes = [
-		"THEME_VMT",
-		"THEME_VHT",
-		"THEME_VOC",
-		"THEME_NOX", 
-		"THEME_CO", 
-		"THEME_CO2"
-	];
 
-	// Lookup Table for Map and Legend palettes, text
-	// Domains emperically split on approximatley the 25th, 50th, and 75th percentile values -- for 2012 data
-	CTPS.vmtApp.themesLookup = {	
-		"THEME_VMT": {	"threshold": d3.scaleThreshold()
-										.domain([230000, 560000, 920000])
-										.range(["#febfdc", "#fe80b9", "#d62e6c", "#a10048"]),
-						"mapTheme": "Vehicle Miles Traveled",
-						"total": "VMT_TOTAL",
-						"legendTheme": "Daily total of modeled vehicle miles traveled (VMT), per municipality.",
-						"legendText": ["< 230,000 miles", "230,000-560,000 miles", "560,000-920,000 miles", "> 920,000 miles"],
-						"legendDomain": [0, 300000, 700000, 2000000],
-						"legendRange": ["#febfdc", "#fe80b9", "#d62e6c", "#a10048"],
-						"tabSelect": "#vmt"
-					},
-		"THEME_VHT": {	"threshold": d3.scaleThreshold()
-										.domain([7000, 16000, 28000])
-										.range(["#d4ffd4", "#a9d6a8", "#53ad51", "#1d6b1b"]),
-						"mapTheme": "Vehicle Hours Traveled",
-						"total": "VHT_TOTAL",
-						"legendTheme": "Daily total of modeled vehicle hours traveled (VHT), per municipality.",
-						"legendText": ["< 7,000 hours","7,000-16,000 hours", "16,000-28,000 hours", "> 28,000 hours"],
-						"legendDomain": [0, 10000, 20000, 30000],
-						"legendRange": ["#d4ffd4", "#a9d6a8", "#53ad51", "#1d6b1b"],
-						"tabSelect": "#vht"
-					},
-		"THEME_VOC": {	"threshold": d3.scaleThreshold()
-										.domain([25, 60, 100])
-										.range(["#FEF7E7", "#E79484", "#BD4A39", "#8C0808"]),
-						"mapTheme": "Volatile Organic Compounds",
-						"total": "VOC_TOTAL",
-						"legendTheme": "Daily total of modeled grams of volatile organic compounds (VOC) emitted, per municipality.",
-						"legendText":  ["< 25 grams", "25-60 grams", "60-100 grams", "> 100 grams"], 
-						"legendDomain": [0, 30, 70, 200],
-						"legendRange": ["#FEF7E7", "#E79484", "#BD4A39", "#8C0808"],
-						"tabSelect": "#voc"
-					},
-		"THEME_NOX": {	"threshold": d3.scaleThreshold()
-										.domain([150, 350, 600])
-										.range(["#e7fec8", "#cffe91", "#86d51e", "#5e9515"]),
-						"mapTheme": "Nitrogen Oxides",
-						"total": "NOX_TOTAL",
-						"legendTheme": "Daily total of modeled grams of nitrogen oxides (NOX) emitted, per municipality.",
-						"legendText": ["< 150 grams", "150-350 grams", "350-600 grams", "> 600 grams"],
-						"legendDomain": [0, 200, 400, 2500],
-						"legendRange": ["#e7fec8", "#cffe91", "#86d51e", "#5e9515"],
-						"tabSelect": "#nox"
-					},
-		"THEME_CO" : {	"threshold": d3.scaleThreshold()
-										.domain([700, 1700, 3000])
-										.range(["#bffffe", "#80fffe", "#0fb3bc", "#006b6b"]),
-						"mapTheme": "Carbon Monoxide",
-						"total": "CO_TOTAL",
-						"legendTheme": "Daily total of modeled grams of carbon monoxide (CO) emitted, per municipality.",
-						"legendText": ["< 700 grams", "700-1,700 grams", "1,700-3,000 grams", "> 3,000 grams"],
-						"legendDomain": [0, 1000, 2000, 3500],
-						"legendRange": ["#bffffe", "#80fffe", "#0fb3bc", "#006b6b"],
-						"tabSelect": "#co"
-					},
-		"THEME_CO2": {	"threshold": d3.scaleThreshold()
-										.domain([100000, 250000, 500000])
-										.range(["#ecd9fe", "#d9b3f3", "#824aba", "#5b3482"]),
-						"mapTheme": "Carbon Dioxide",
-						"total": "CO2_TOTAL",
-						"legendTheme": "Daily total of modeled grams of carbon dioxide (CO2) emitted, per municipality.",
-						"legendText": ["< 100,000 grams", "100,000-250,000 grams", "250,000-500,000 grams", "> 500,000 grams"],
-						"legendDomain": [0, 200000, 450000, 2000000],
-						"legendRange": ["#ecd9fe", "#d9b3f3", "#824aba", "#5b3482"], 
-						"tabSelect": "#co2"
-					}
-	};
 
-	// Data "stores" for the accessible grids - really just arrays of objects (key/value pairs).
-	CTPS.vmtApp.vmtStore = [];
-	CTPS.vmtApp.vhtStore = [];
-	CTPS.vmtApp.vocStore = [];
-	CTPS.vmtApp.noxStore = [];
-	CTPS.vmtApp.coStore  = [];
-	CTPS.vmtApp.co2Store = []; 
+
+
 		
-	//Accessible Table Row Names
-	CTPS.vmtApp.aRowNames = [
-		'Single Occupant Vehicles',
-		'High Occupant Vehicles',
-		'Trucks',
-		'Total (SOV, HOV, Trucks)'
-	];
-	
-	//////////////////////////////////////////////////////////////////////////////////////
-	//
-	//	1)	Utility Functions
-	//
-	//////////////////////////////////////////////////////////////////////////////////////	
-	// Function to open URL in new window -- used for "Help Button"
-	function popup(url) {
-		popupWindow = window.open(url,'popUpWindow','height=700,width=800,left=10,top=10,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no,status=yes')
-	};
-	
-	//Functions to Hide/Unhide Tabs -- exists this way to remove individual class names if multiple exist
-	function hideTab() {
-		var e = document.getElementById('mytabs');
-		e.className += ' hidden';
-	};
-	function unhideTab() {
-		var e = document.getElementById('mytabs');
-		e.className = e.className.replace(/hidden/gi,"");
-	};
-	
-	// Function to capitalize only first letter of Town names
-	// https://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript/196991#196991
-	function toTitleCase(str) {
-		return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-	};
-	
-	// Function to rearrage data array (needed for hover-highlighting b/c internal data order messed up 
-	// when you bring the selected town to the front of the SVG -- this corrects that bug)
-	// https://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another
-	Array.prototype.move = function (old_index, new_index) {
-		if (new_index >= this.length) {
-			var k = new_index - this.length;
-			while ((k--) + 1) {
-				this.push(undefined);
-			}
-		}
-		this.splice(new_index, 0, this.splice(old_index, 1)[0]);
-		return this; // for testing purposes
-	};
-	
-	//////////////////////////////////////////////////////////////////////////////////////
-	//
-	//	2)	Populate combo boxes
-	//
-	//////////////////////////////////////////////////////////////////////////////////////
-	// Populate "Select Map Theme" combo box
-	for (i = 0; i < CTPS.vmtApp.themes.length; i++) {
-		$("#selected_theme").append(
-			$("<option />")
-				.val(CTPS.vmtApp.themes[i])
-				.text(CTPS.vmtApp.themesLookup[CTPS.vmtApp.themes[i]]["mapTheme"])
-		);
-	};
-	
-	// Populate "Select A Municipality" combo box
-	for (i = 0; i < CTPSUTILS.aMpoTowns.length; i++) {
-		$("#selected_town").append(
-			$("<option />")
-				.val(CTPSUTILS.aMpoTowns[i][0])
-				.text(toTitleCase(CTPSUTILS.aMpoTowns[i][1]))
-		);
-	};
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	//
-	//	3)	Functions to Create/Update Accessible Table
-	//
-	//////////////////////////////////////////////////////////////////////////////////////
-	CTPS.vmtApp.renderTown = function() {
-		var iTownId = +$('#selected_town :selected').val();
-		
-		if (!iTownId > 0){
-			alert('No city or town selected. Please try selecting a theme again from either the dropdown or the map.');
-			return;
-		} else {
-			// Log and save Town Name for Table caption
-			CTPS.vmtApp.currentTown = $('#selected_town :selected').text();
-			
-			// Display table with selected data for town
-			for (i=0; i<CTPS.vmtApp.data.length; i++) {
-				if (+(CTPS.vmtApp.data[i].properties.TOWN_ID) === iTownId){
-					CTPS.vmtApp.displayTable(CTPS.vmtApp.data[i].properties);
-					break;
-				};
-			};
-			
-			// Change highlighted town on map to reflect selected town
-			$(".towns").each(function(i) {
-				if ( +this.id === +iTownId ) {
-					// Outline clicked town in red, bring to front
-					d3.select(this.parentNode.appendChild(this))
-						.transition().duration(100)
-							.style("stroke-width", "4px")
-							.style("stroke", "#ff0000");
-					for (var i=0; i<CTPS.vmtApp.data.length; i++) {
-						if (+CTPS.vmtApp.data[i].properties.TOWN_ID === +this.id) {
-							// Reorder data so selected town moved to last element in array.
-							// Needed in order to properly update data, d3 thinks this town
-							// was drawn last and will improperly update the map otherwise
-							CTPS.vmtApp.data.move(i, CTPS.vmtApp.data.length-1);
-						};
-					};
-				} else {
-					this.style.strokeWidth = "1px";
-					this.style.stroke = "#000";
-				};
-			});
-		};
-	};	//CTPS.vmtApp.renderTown()
+	
+
+	
+
+
+
 	
 	// Function to initialize the Table Grids
-	CTPS.vmtApp.initializeGrids = function() {
-		var colDesc = [ { header : 'Mode', 		dataIndex : 'title' }, 
-						{ header : '6AM-9AM', 	dataIndex : 'am' }, 
-						{ header : '9AM-3PM', 	dataIndex : 'md' }, 
-						{ header : '3PM-6PM', 	dataIndex : 'pm' },
-						{ header : '6PM-6AM', 	dataIndex : 'nt' },
-						{ header : 'Daily', 	dataIndex : 'total' }
+	CTPS.vmtApp.initGrids = function() {
+		var colDesc = [ { header : 'Municipality', 		dataIndex : 'TOWN' }, 
+						{ header : 'VMT', 	dataIndex : 'VMT_TOTAL' }, 
+						{ header : 'VHT', 	dataIndex : 'VHT_TOTAL' }, 
+						{ header : 'VOC', 	dataIndex : 'VOC_TOTAL' },
+						{ header : 'NOX', 	dataIndex : 'NOX_TOTAL' },
+						{ header : 'CO', 	dataIndex : 'CO_TOTAL' },
+                        { header : 'CO2', 	dataIndex : 'CO2_TOTAL' },
 						];
 		
-		CTPS.vmtApp.vmtGrid = new AccessibleGrid( { divId 		:	'vmt_grid',
-													tableId 	:	'vmt_table',
-													summary		: 	'Table columns are daily peak and off peak period divisions plus daily totals, rows are 3 vehicle types, cells are total vehicle miles',
-													caption		:	'Vehicle Miles of Travel for ' + CTPS.vmtApp.currentTown,
+		CTPS.vmtApp.grid_2016 = new AccessibleGrid( { divId 	:	'grid_2016',
+													tableId 	:	'table_2016',
+													summary		: 	'Table columns are town name, total VMT, total VHT, total VOC emissions, total NOX emissions, total CO emissions, and total CO2 emissions.',
+													caption		:	'Data for 2016',
 													ariaLive	:	'assertive',
 													colDesc		: 	colDesc
 										});								
-		CTPS.vmtApp.vmtGrid.loadArrayData(CTPS.vmtApp.vmtStore);
+		CTPS.vmtApp.grid_2016.loadArrayData(CTPS.vmtApp.store_2016);
 
-		CTPS.vmtApp.vhtGrid = new AccessibleGrid( { divId 		:	'vht_grid',
-													tableId 	:	'vht_table',
-													summary		: 	'Table columns are daily peak and off peak period divisions plus daily totals, rows are 3 vehicle types, cells are total vehicle hours of travel',
-													caption		:	'Vehicle Hours of Travel for ' + CTPS.vmtApp.currentTown,
+		CTPS.vmtApp.grid_2040 = new AccessibleGrid( { divId 	:	'grid_2040',
+													tableId 	:	'table_2040',
+													summary		: 	'Table columns are town name, total VMT, total VHT, total VOC emissions, total NOX emissions, total CO emissions, and total CO2 emissions.',
+													caption		:	'Data for 2040',
 													ariaLive	:	'assertive',
 													colDesc		: 	colDesc
 										});								
-		CTPS.vmtApp.vhtGrid.loadArrayData(CTPS.vmtApp.vhtStore);
+		CTPS.vmtApp.grid_2040.loadArrayData(CTPS.vmtApp.store_2016);
 		
-		CTPS.vmtApp.vocGrid = new AccessibleGrid( { divId 		:	'voc_grid',
-													tableId 	:	'voc_table',
-													summary		: 	'Table columns are daily peak and off peak period divisions plus daily totals, rows are 3 vehicle types, cells are total grams of V O C',
-													caption		:	'Volatile Organic Compounds, grams, for ' + CTPS.vmtApp.currentTown,
-													ariaLive	:	'assertive',
-													colDesc		: 	colDesc
-										});								
-		CTPS.vmtApp.vocGrid.loadArrayData(CTPS.vmtApp.vocStore);
-		
-		CTPS.vmtApp.noxGrid = new AccessibleGrid( { divId 		:	'nox_grid',
-													tableId 	:	'nox_table',
-													summary		: 	'Table columns are daily peak and off peak period divisions plus daily totals, rows are 3 vehicle types, cells are total grams of N O X',
-													caption		:	'Nitrogen Oxides, grams, for ' + CTPS.vmtApp.currentTown,
-													ariaLive	:	'assertive',
-													colDesc		: 	colDesc
-										});								
-		CTPS.vmtApp.noxGrid.loadArrayData(CTPS.vmtApp.noxStore);
-		
-		CTPS.vmtApp.coGrid = new AccessibleGrid( { divId 		:	'co_grid',
-													tableId 	:	'co_table',
-													summary		: 	'Table columns are daily peak and off peak period divisions plus daily totals, rows are 3 vehicle types, cells are total kilograms of C O',
-													caption		:	'Carbon Monoxide, grams, for ' + CTPS.vmtApp.currentTown,
-													ariaLive	:	'assertive',
-													colDesc		: 	colDesc
-										});								
-		CTPS.vmtApp.coGrid.loadArrayData(CTPS.vmtApp.coStore);
-		
-		CTPS.vmtApp.co2Grid = new AccessibleGrid( { divId 		:	'co2_grid',
-													tableId 	:	'co2_table',
-													summary		: 	'Table columns are daily peak and off peak period divisions plus daily totals, rows are 3 vehicle types, cells are total kilograms of C O 2',
-													caption		:	'Carbon Dioxide, grams, for ' + CTPS.vmtApp.currentTown,
-													ariaLive	:	'assertive',
-													colDesc		: 	colDesc
-										});								
-		CTPS.vmtApp.co2Grid.loadArrayData(CTPS.vmtApp.co2Store);
-
 		return { "vmtGrid": CTPS.vmtApp.vmtGrid,
 				 "vhtGrid": CTPS.vmtApp.vhtGrid,
 				 "vocGrid": CTPS.vmtApp.vocGrid,
 				 "noxGrid": CTPS.vmtApp.noxGrid,
 				 "coGrid" : CTPS.vmtApp.coGrid,
-				 "co2Grid": CTPS.vmtApp.co2Grid	}
-	};
+				 "co2Grid": CTPS.vmtApp.co2Grid	};
+	}; // initGrids()
 
 	// Function to load the Table data into the data stores
 	CTPS.vmtApp.populateDataStores = function(aAttrs) {
-		// #1 VMT data		
-		CTPS.vmtApp.vmtStore = [];
-		CTPS.vmtApp.vmtStore[0] = { title	: CTPS.vmtApp.aRowNames[0],                                
-									am		: (+(+aAttrs.VMT_SOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.VMT_SOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.VMT_SOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.VMT_SOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.VMT_SOV_AM)+(+aAttrs.VMT_SOV_MD)+(+aAttrs.VMT_SOV_PM)+(+aAttrs.VMT_SOV_NT)).toFixed(0)).toLocaleString() };
-									
-		CTPS.vmtApp.vmtStore[1] = { title	: CTPS.vmtApp.aRowNames[1],
-									am		: (+(+aAttrs.VMT_HOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.VMT_HOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.VMT_HOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.VMT_HOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.VMT_HOV_AM)+(+aAttrs.VMT_HOV_MD)+(+aAttrs.VMT_HOV_PM)+(+aAttrs.VMT_HOV_NT)).toFixed(0)).toLocaleString() };
-									
-		CTPS.vmtApp.vmtStore[2] = { title	: CTPS.vmtApp.aRowNames[2],
-									am		: (+(+aAttrs.VMT_TRK_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.VMT_TRK_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.VMT_TRK_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.VMT_TRK_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.VMT_TRK_AM)+(+aAttrs.VMT_TRK_MD)+(+aAttrs.VMT_TRK_PM)+(+aAttrs.VMT_TRK_NT)).toFixed(0)).toLocaleString() };
-	
-		CTPS.vmtApp.vmtStore[3] = { title	: CTPS.vmtApp.aRowNames[3],
-									am		: (+((+aAttrs.VMT_SOV_AM)+(+aAttrs.VMT_HOV_AM)+(+aAttrs.VMT_TRK_AM)).toFixed(0)).toLocaleString(),
-									md		: (+((+aAttrs.VMT_SOV_MD)+(+aAttrs.VMT_HOV_MD)+(+aAttrs.VMT_TRK_MD)).toFixed(0)).toLocaleString(),
-									pm		: (+((+aAttrs.VMT_SOV_PM)+(+aAttrs.VMT_HOV_PM)+(+aAttrs.VMT_TRK_PM)).toFixed(0)).toLocaleString(),
-									nt		: (+((+aAttrs.VMT_SOV_NT)+(+aAttrs.VMT_HOV_NT)+(+aAttrs.VMT_TRK_NT)).toFixed(0)).toLocaleString(),
-									total	: (+(+aAttrs.VMT_TOTAL).toFixed(0)).toLocaleString() };
-									
-		// #2 VHT data			
-		CTPS.vmtApp.vhtStore = []; 
-		CTPS.vmtApp.vhtStore[0] = { title	: CTPS.vmtApp.aRowNames[0],
-									am		: (+(+aAttrs.VHT_SOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.VHT_SOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.VHT_SOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.VHT_SOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.VHT_SOV_AM)+(+aAttrs.VHT_SOV_MD)+(+aAttrs.VHT_SOV_PM)+(+aAttrs.VHT_SOV_NT)).toFixed(0)).toLocaleString() };
-		
-		CTPS.vmtApp.vhtStore[1] = { title	: CTPS.vmtApp.aRowNames[1],
-									am		: (+(+aAttrs.VHT_HOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.VHT_HOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.VHT_HOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.VHT_HOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.VHT_HOV_AM)+(+aAttrs.VHT_HOV_MD)+(+aAttrs.VHT_HOV_PM)+(+aAttrs.VHT_HOV_NT)).toFixed(0)).toLocaleString() };
-									
-		CTPS.vmtApp.vhtStore[2] = { title	: CTPS.vmtApp.aRowNames[2],
-									am		: (+(+aAttrs.VHT_TRK_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.VHT_TRK_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.VHT_TRK_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.VHT_TRK_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.VHT_TRK_AM)+(+aAttrs.VHT_TRK_MD)+(+aAttrs.VHT_TRK_PM)+(+aAttrs.VHT_TRK_NT)).toFixed(0)).toLocaleString() };
-		
-		CTPS.vmtApp.vhtStore[3] = { title	: CTPS.vmtApp.aRowNames[3],
-									am		: (+((+aAttrs.VHT_SOV_AM)+(+aAttrs.VHT_HOV_AM)+(+aAttrs.VHT_TRK_AM)).toFixed(0)).toLocaleString(),
-									md		: (+((+aAttrs.VHT_SOV_MD)+(+aAttrs.VHT_HOV_MD)+(+aAttrs.VHT_TRK_MD)).toFixed(0)).toLocaleString(),
-									pm		: (+((+aAttrs.VHT_SOV_PM)+(+aAttrs.VHT_HOV_PM)+(+aAttrs.VHT_TRK_PM)).toFixed(0)).toLocaleString(),
-									nt		: (+((+aAttrs.VHT_SOV_NT)+(+aAttrs.VHT_HOV_NT)+(+aAttrs.VHT_TRK_NT)).toFixed(0)).toLocaleString(),
-									total	: (+(+aAttrs.VHT_TOTAL).toFixed(0)).toLocaleString() };
-									
-		// #3 VOC data	
-		CTPS.vmtApp.vocStore = [];
-		CTPS.vmtApp.vocStore[0] = { title	: CTPS.vmtApp.aRowNames[0],
-									am		: (+(+aAttrs.VOC_SOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.VOC_SOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.VOC_SOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.VOC_SOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.VOC_SOV_AM)+(+aAttrs.VOC_SOV_MD)+(+aAttrs.VOC_SOV_PM)+(+aAttrs.VOC_SOV_NT)).toFixed(0)).toLocaleString() };
-									
-		CTPS.vmtApp.vocStore[1] = { title	: CTPS.vmtApp.aRowNames[1],
-									am		: (+(+aAttrs.VOC_HOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.VOC_HOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.VOC_HOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.VOC_HOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.VOC_HOV_AM)+(+aAttrs.VOC_HOV_MD)+(+aAttrs.VOC_HOV_PM)+(+aAttrs.VOC_HOV_NT)).toFixed(0)).toLocaleString() };
-									
-		CTPS.vmtApp.vocStore[2] = { title	: CTPS.vmtApp.aRowNames[2],
-									am		: (+(+aAttrs.VOC_TRK_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.VOC_TRK_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.VOC_TRK_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.VOC_TRK_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.VOC_TRK_AM)+(+aAttrs.VOC_TRK_MD)+(+aAttrs.VOC_TRK_PM)+(+aAttrs.VOC_TRK_NT)).toFixed(0)).toLocaleString() };
-		
-		CTPS.vmtApp.vocStore[3] = { title	: CTPS.vmtApp.aRowNames[3],
-									am		: (+((+aAttrs.VOC_SOV_AM)+(+aAttrs.VOC_HOV_AM)+(+aAttrs.VOC_TRK_AM)).toFixed(0)).toLocaleString(),
-									md		: (+((+aAttrs.VOC_SOV_MD)+(+aAttrs.VOC_HOV_MD)+(+aAttrs.VOC_TRK_MD)).toFixed(0)).toLocaleString(),
-									pm		: (+((+aAttrs.VOC_SOV_PM)+(+aAttrs.VOC_HOV_PM)+(+aAttrs.VOC_TRK_PM)).toFixed(0)).toLocaleString(),
-									nt		: (+((+aAttrs.VOC_SOV_NT)+(+aAttrs.VOC_HOV_NT)+(+aAttrs.VOC_TRK_NT)).toFixed(0)).toLocaleString(),
-									total	: (+(+aAttrs.VOC_TOTAL).toFixed(0)).toLocaleString() };
-									
-		// #4 NOX data				
-		CTPS.vmtApp.noxStore = [];
-		CTPS.vmtApp.noxStore[0] = {	title	: CTPS.vmtApp.aRowNames[0],	
-									am		: (+(+aAttrs.NOX_SOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.NOX_SOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.NOX_SOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.NOX_SOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.NOX_SOV_AM)+(+aAttrs.NOX_SOV_MD)+(+aAttrs.NOX_SOV_PM)+(+aAttrs.NOX_SOV_NT)).toFixed(0)).toLocaleString() };
-									
-		CTPS.vmtApp.noxStore[1] = { title	: CTPS.vmtApp.aRowNames[1],
-									am		: (+(+aAttrs.NOX_HOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.NOX_HOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.NOX_HOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.NOX_HOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.NOX_HOV_AM)+(+aAttrs.NOX_HOV_MD)+(+aAttrs.NOX_HOV_PM)+(+aAttrs.NOX_HOV_NT)).toFixed(0)).toLocaleString() };
-		
-		CTPS.vmtApp.noxStore[2] = { title	: CTPS.vmtApp.aRowNames[2],
-									am		: (+(+aAttrs.NOX_TRK_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.NOX_TRK_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.NOX_TRK_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.NOX_TRK_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.NOX_TRK_AM)+(+aAttrs.NOX_TRK_MD)+(+aAttrs.NOX_TRK_PM)+(+aAttrs.NOX_TRK_NT)).toFixed(0)).toLocaleString() };
-		
-		CTPS.vmtApp.noxStore[3] = { title	: CTPS.vmtApp.aRowNames[3],
-									am		: (+((+aAttrs.NOX_SOV_AM)+(+aAttrs.NOX_HOV_AM)+(+aAttrs.NOX_TRK_AM)).toFixed(0)).toLocaleString(),
-									md		: (+((+aAttrs.NOX_SOV_MD)+(+aAttrs.NOX_HOV_MD)+(+aAttrs.NOX_TRK_MD)).toFixed(0)).toLocaleString(),
-									pm		: (+((+aAttrs.NOX_SOV_PM)+(+aAttrs.NOX_HOV_PM)+(+aAttrs.NOX_TRK_PM)).toFixed(0)).toLocaleString(),
-									nt		: (+((+aAttrs.NOX_SOV_NT)+(+aAttrs.NOX_HOV_NT)+(+aAttrs.NOX_TRK_NT)).toFixed(0)).toLocaleString(),
-									total	: (+(+aAttrs.NOX_TOTAL).toFixed(0)).toLocaleString() };
-									
-		// #5 CO data				
-		CTPS.vmtApp.coStore = [];
-		CTPS.vmtApp.coStore[0] = { title	: CTPS.vmtApp.aRowNames[0],
-									am		: (+(+aAttrs.CO_SOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.CO_SOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.CO_SOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.CO_SOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.CO_SOV_AM)+(+aAttrs.CO_SOV_MD)+(+aAttrs.CO_SOV_PM)+(+aAttrs.CO_SOV_NT)).toFixed(0)).toLocaleString() };
-									
-		CTPS.vmtApp.coStore[1] = { title	: CTPS.vmtApp.aRowNames[1],
-									am		: (+(+aAttrs.CO_HOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.CO_HOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.CO_HOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.CO_HOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.CO_HOV_AM)+(+aAttrs.CO_HOV_MD)+(+aAttrs.CO_HOV_PM)+(+aAttrs.CO_HOV_NT)).toFixed(0)).toLocaleString() };
-									
-		CTPS.vmtApp.coStore[2] = { title	: CTPS.vmtApp.aRowNames[2],
-									am		: (+(+aAttrs.CO_TRK_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.CO_TRK_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.CO_TRK_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.CO_TRK_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.CO_TRK_AM)+(+aAttrs.CO_TRK_MD)+(+aAttrs.CO_TRK_PM)+(+aAttrs.CO_TRK_NT)).toFixed(0)).toLocaleString() };
 
-		CTPS.vmtApp.coStore[3] = { title	: CTPS.vmtApp.aRowNames[3],
-									am		: (+((+aAttrs.CO_SOV_AM)+(+aAttrs.CO_HOV_AM)+(+aAttrs.CO_TRK_AM)).toFixed(0)).toLocaleString(),
-									md		: (+((+aAttrs.CO_SOV_MD)+(+aAttrs.CO_HOV_MD)+(+aAttrs.CO_TRK_MD)).toFixed(0)).toLocaleString(),
-									pm		: (+((+aAttrs.CO_SOV_PM)+(+aAttrs.CO_HOV_PM)+(+aAttrs.CO_TRK_PM)).toFixed(0)).toLocaleString(),
-									nt		: (+((+aAttrs.CO_SOV_NT)+(+aAttrs.CO_HOV_NT)+(+aAttrs.CO_TRK_NT)).toFixed(0)).toLocaleString(),
-									total	: (+(+aAttrs.CO_TOTAL).toFixed(0)).toLocaleString() };
-									
-		// #6 CO2 data				
-		CTPS.vmtApp.co2Store = [];
-		CTPS.vmtApp.co2Store[0] = { title	: CTPS.vmtApp.aRowNames[0],
-									am		: (+(+aAttrs.CO2_SOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.CO2_SOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.CO2_SOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.CO2_SOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.CO2_SOV_AM)+(+aAttrs.CO2_SOV_MD)+(+aAttrs.CO2_SOV_PM)+(+aAttrs.CO2_SOV_NT)).toFixed(0)).toLocaleString() };
-									
-		CTPS.vmtApp.co2Store[1] = { title	: CTPS.vmtApp.aRowNames[1],
-									am		: (+(+aAttrs.CO2_HOV_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.CO2_HOV_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.CO2_HOV_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.CO2_HOV_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.CO2_HOV_AM)+(+aAttrs.CO2_HOV_MD)+(+aAttrs.CO2_HOV_PM)+(+aAttrs.CO2_HOV_NT)).toFixed(0)).toLocaleString() };
-									
-		CTPS.vmtApp.co2Store[2] = { title	: CTPS.vmtApp.aRowNames[2],
-									am		: (+(+aAttrs.CO2_TRK_AM).toFixed(0)).toLocaleString(),
-									md		: (+(+aAttrs.CO2_TRK_MD).toFixed(0)).toLocaleString(),
-									pm		: (+(+aAttrs.CO2_TRK_PM).toFixed(0)).toLocaleString(),
-									nt		: (+(+aAttrs.CO2_TRK_NT).toFixed(0)).toLocaleString(),
-									total	: (+((+aAttrs.CO2_TRK_AM)+(+aAttrs.CO2_TRK_MD)+(+aAttrs.CO2_TRK_PM)+(+aAttrs.CO2_TRK_NT)).toFixed(0)).toLocaleString() };
-		
-		CTPS.vmtApp.co2Store[3] = { title	: CTPS.vmtApp.aRowNames[3],
-									am		: (+((+aAttrs.CO2_SOV_AM)+(+aAttrs.CO2_HOV_AM)+(+aAttrs.CO2_TRK_AM)).toFixed(0)).toLocaleString(),
-									md		: (+((+aAttrs.CO2_SOV_MD)+(+aAttrs.CO2_HOV_MD)+(+aAttrs.CO2_TRK_MD)).toFixed(0)).toLocaleString(),
-									pm		: (+((+aAttrs.CO2_SOV_PM)+(+aAttrs.CO2_HOV_PM)+(+aAttrs.CO2_TRK_PM)).toFixed(0)).toLocaleString(),
-									nt		: (+((+aAttrs.CO2_SOV_NT)+(+aAttrs.CO2_HOV_NT)+(+aAttrs.CO2_TRK_NT)).toFixed(0)).toLocaleString(),
-									total	: (+(+aAttrs.CO2_TOTAL).toFixed(0)).toLocaleString() };
-									
-		return { "vmtStore": CTPS.vmtApp.vmtStore,
-				 "vhtStore": CTPS.vmtApp.vhtStore,
-				 "vocStore": CTPS.vmtApp.vocStore,
-				 "noxStore": CTPS.vmtApp.noxStore,
-				 "coStore": CTPS.vmtApp.coStore,
-				 "co2Store": CTPS.vmtApp.co2Store };
 	};
 	
 	//Function to clear Table Grids
@@ -564,7 +420,7 @@ function vmtAppInit() {
 		CTPS.vmtApp.coGrid.loadArrayData(CTPS.vmtApp.coStore);
 		CTPS.vmtApp.co2Grid.loadArrayData(CTPS.vmtApp.co2Store);
 		
-	};
+	}; // CTPS.vmtApp.displayTable() ***** FOSSIL *****
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -629,12 +485,12 @@ function vmtAppInit() {
 				}
 				// No errors, bind data values
 				var topoOutline = results[2];
-				CTPS.vmtApp.topoOutline = topojson.feature(topoOutline, topoOutline.objects.MA_TOWNS_NON_MPO101).features;
+				CTPS.vmtApp.topoOutline = topojson.feature(topoOutline, topoOutline.objects.MA_TOWNS_NON_MPO97).features;
 				
 				// Merge CSV data with JSON data to create JSON object ('CTPS.vmtApp.data') for app
 				var topotowns = results[0];
 				var csv = results[1];
-				var towns = topojson.feature(topotowns, topotowns.objects.MA_TOWNS_MPO101).features;
+				var towns = topojson.feature(topotowns, topotowns.objects.MA_TOWNS_MPO97).features;
 				for (var i=0; i<towns.length; i++) {
 					for (var j=0; j<csv.length; j++) {
 						if (+towns[i].properties.TOWN_ID === +csv[j].TOWN_ID) {
@@ -824,7 +680,7 @@ function vmtAppInit() {
 			alert('No theme selected. Please try selecting a theme again from either the dropdown or the table.');
 			return;
 		};
-	};
+	}; // CTPS.vmtApp.renderTheme()
 	
 	CTPS.vmtApp.initHandlers = function() {
 		// Load data on new year select 
@@ -833,7 +689,7 @@ function vmtAppInit() {
 			var year = +$('#display_year :selected').val();
 			CTPS.vmtApp.csvData = CTPS.vmtApp.displayYear(year);
 			
-			// Load and Store Data
+			// Load TopoJSON and CSV data, and merge TopoJSON and CSV data for 97 MPO municipalities into CTSP.vmtApp.data
 			d3.queue()
 				.defer(d3.csv, CTPS.vmtApp.csvData)
 				.awaitAll(function(error, results) {
@@ -892,17 +748,7 @@ function vmtAppInit() {
 			CTPS.vmtApp.renderTown();
 		});
 		
-		// Help Button
-		$('#help_button').click(function(e) {
-			popup(helpData);
-		});
-		
-		// Download Data Button
-		$('#download_button_2012, #download_button_2020, #download_button_2040').each(function() { 
-			$(this).click(function() {
-				window.location = $(this).find('a').attr('href');
-			});	
-		});
+
 		
 		// Bind theme names as class name to table tabs
 		for (var i=0; i<CTPS.vmtApp.themes.length; i++) {
@@ -913,8 +759,7 @@ function vmtAppInit() {
 			$("#selected_theme").val(e.target.className);
 			CTPS.vmtApp.renderTheme();
 		});
-
-	};
+	}; // CTPS.vmtApp.initHandlers()
 	
 	//////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -923,12 +768,9 @@ function vmtAppInit() {
 	//////////////////////////////////////////////////////////////////////////////////////
 	CTPS.vmtApp.displayYear = function(year) {
 		switch (year) {
-			case 2012:
-				return csvData_2012;
-				break;
-			case 2020:
-				return csvData_2020;
-				break;
+			case 2016:
+				return csvData_2016;
+				break;;
 			case 2040:
 				return csvData_2040;
 				break;
@@ -939,8 +781,76 @@ function vmtAppInit() {
 	};
 	
 	CTPS.vmtApp.init = function() {
+        
+    /* 
+        // Load all data required by app
+        var MPO_towns = "data/MA_TOWNS_MPO97.json";
+        var MA_outline = "data/MA_TOWNS_NON_MPO97.json";
+        var csvData_2016 = "data/CTPS_TOWNS_MAPC_97_VMT_2016.csv";
+        var csvData_2040 = "data/CTPS_TOWNS_MAPC_VMT_2040.csv";
+        
+        var q = d3.queue()
+                .defer(d3.json, MPO_towns)
+                .defer(d3.json, MA_outline)
+                .defer(d3.csv, csvData_2016)
+                .defer(d3.csv, csvData_2040)
+				.awaitAll(function(error, results) { 
+                    // Check for errors
+                    if (error !== null) {
+                        alert('Failure loading JSON or CSV file.\n' +
+                              'Status: ' + error.status + '\n' +
+                              'Status text: ' + error.statusText + '\n' +
+                              'URL :' + error.responseURL);
+                        return;
+                    }              
+                    var topoTowns = results[0];
+                    var topoOutline = results[1];                    
+                    CTPS.vmtApp.tabularData_2016 = results[2];
+                    CTPS.vmtApp.tabularData_2040 = results[3];      
+                    
+                    function parseCSV(rec) {
+                        rec.VMT_TOTAL = +rec.VMT_TOTAL;
+                        rec.VHT_TOTAL = +rec.VHT_TOTAL;
+                        rec.VOC_TOTAL = +rec.VOC_TOTAL;
+                        rec.NOX_TOTAL = +rec.NOX_TOTAL;
+                        rec.CO_TOTAL  = +rec.CO_TOTAL;
+                        rec.CO2_TOTAL = +rec.CO2_TOTAL;
+                    } // parseCSV()
+                    
+                    CTPS.vmtApp.tabularData_2016.forEach(parseCSV);
+                    CTPS.vmtApp.tabularData_2016.forEach(parseCSV);
+                    
+                    // Make a 'deep' copy of topoTowns
+                    var towns2 = Object.assign({}, topoTowns);
+                    
+                    function joinGeoWithTabular(towns,tabular) {
+                        var i, j;
+                        for (i = 0; i < towns.length; i++) {
+                            for (j = 0; j < tabular.length; j++) {
+                                if (+towns[i].properties.TOWN_ID === +tabular[j].TOWN_ID) {
+                                    towns[i].properties = tabular[j];
+                                }
+                            }
+                        };                      
+                    } // joinGeoWithTabular()
+                    
+                    joinGeoWithTabular(topoTowns, CTPS.vmtApp.tabularData_2016);
+                    joinGeoWithTabular(topoTowns2, CTPS.vmtApp.tabularData_2040);
+                                         
+                    CTPS.vmtApp.topoOutline = topojson.feature(topoOutline, topoOutline.objects.MA_TOWNS_NON_MPO97).features;
+                    
+                    var _DEBUG_HOOK = 0;
+                }); // q.awaitAll()
+        
+        */
+        
 		// Initialize Map
-		CTPS.vmtApp.csvData = CTPS.vmtApp.displayYear(2012); //load 2012 data on start
+		CTPS.vmtApp.csvData = CTPS.vmtApp.displayYear(2016); //load 2016 data on start
+        
+        
+        
+        
+        
 		CTPS.vmtApp.initMap();
 		
 		// Set the "alt" and "title" attributes of the page element containing the map.
@@ -951,16 +861,12 @@ function vmtAppInit() {
 		CTPS.vmtApp.initLegend();
 		
 		// Initialize Table
-		CTPS.vmtApp.initializeGrids();
+		CTPS.vmtApp.initGrids();
 		
 		// Initialize Event Handlers
 		CTPS.vmtApp.initHandlers();
 	};
 	
-	// Initialize App!
+	// Initialize App
 	CTPS.vmtApp.init();
-	
 };
-
-
-
