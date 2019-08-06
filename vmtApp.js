@@ -160,6 +160,7 @@ CTPS.vmtApp.csvData = '';       // probably fossil
 
 CTPS.vmtApp.currentTown = '';  
 CTPS.vmtApp.currentTownID = 0;  
+var helpData = "vmtAppHelp.html";
     
 function vmtAppInit() {
     // Initialize accessible tabs
@@ -262,16 +263,13 @@ function vmtAppInit() {
 			});
         */
 		}
-		});
+	}); // On-change event handler for select_town combo box
     
     
 	//////////////////////////////////////////////////////////////////////////////////////
 	//
 	// Load data
 	//
-	//////////////////////////////////////////////////////////////////////////////////////
-    
- 
     var q = d3.queue()
             .defer(d3.json, MPO_towns)          // OK
             .defer(d3.json, MA_outline)         // OK
@@ -332,7 +330,7 @@ function vmtAppInit() {
                 
                 var _DEBUG_HOOK_1 = 0;
                 
-                
+                initMap();
                 
             }); // q.awaitAll()    
     
@@ -343,64 +341,21 @@ function vmtAppInit() {
     
    ///////////////////////////////////////////////////////////// 
 	
-	var helpData = "vmtAppHelp.html";
+
 	
-	// Pre-defined constants
-	var i,
-		width = $('#map').width(),
+	// Pseudo-contants for map and legend rendering
+	var width = $('#map').width(),
 		height = $('#map').height(),
 		legend_width = 240,
 		legend_height = 120,
 		legendRectSize = 16,
 		legendSpacing = 4;
 
-
-
-
-		
-
-	
-
-	
-
-
-
-	
-
-
-
-	
-
-
-	//Function to display Table (called above on click)
-    // ***** FOSSIL *****
-	CTPS.vmtApp.displayTable = function(data) {
-		
-		//Reset and unhide table
-		hideTab();
-		CTPS.vmtApp.clearGrids();
-		unhideTab();
-		
-		//Initialize Grid and Data Store						
-		CTPS.vmtApp.initializeGrids();
-		
-		//Load Data Store and populate Grid
-		CTPS.vmtApp.populateDataStores(data);
-		CTPS.vmtApp.vmtGrid.loadArrayData(CTPS.vmtApp.vmtStore);
-		CTPS.vmtApp.vhtGrid.loadArrayData(CTPS.vmtApp.vhtStore);
-		CTPS.vmtApp.vocGrid.loadArrayData(CTPS.vmtApp.vocStore);
-		CTPS.vmtApp.noxGrid.loadArrayData(CTPS.vmtApp.noxStore);
-		CTPS.vmtApp.coGrid.loadArrayData(CTPS.vmtApp.coStore);
-		CTPS.vmtApp.co2Grid.loadArrayData(CTPS.vmtApp.co2Store);
-		
-	}; // CTPS.vmtApp.displayTable() ***** FOSSIL *****
-
 	//////////////////////////////////////////////////////////////////////////////////////
 	//
-	//	4)	Map and Map Legend Initialization/Rendering Functions
+	// Map and Map Legend Initialization/Rendering Functions
 	//
-	//////////////////////////////////////////////////////////////////////////////////////
-	CTPS.vmtApp.initMap = function() {
+	var initMap = function() {
 		// Define projection: Mass State Plane NAD 83 Meters.
 		// Standard parallels and rotation (grid origin latitude and longitude) from 
 		//     NOAA Manual NOS NGS 5: State Plane Coordinate System of 1983, p. 67.
@@ -442,7 +397,8 @@ function vmtAppInit() {
 		CTPS.vmtApp.svgMPO = mpo;				// Saved for later updates in CTPS.vmtApp.renderTheme() 
 		var scaleBar = svg.append("g")				// "g" element defined to display scale bar
 			.attr("id", "distance_scale");
-		
+
+/*		
 		d3.queue()
 			.defer(d3.json, jsonData)
 			.defer(d3.csv, CTPS.vmtApp.csvData)
@@ -472,107 +428,118 @@ function vmtAppInit() {
 					};
 				};
 				CTPS.vmtApp.data = towns;	// CSV data merged with JSON data to create JSON object with CTPS.vmtApp.data for app
+*/
 				
-				// Create SVG <path> for towns
-				mpo.selectAll("path")
-					.data(CTPS.vmtApp.data)
-					.enter()
-					.append("path")
-						.attr("id", function(d, i) { return +(d.properties.TOWN_ID); })
-						.attr("class", "towns")
-						.attr("d", function(d, i) { return geoPath(d); })
-						.on("mouseenter", function(d) { 
-							tip.show(d); 
-							d3.select(this).style("cursor", "pointer")
-										   .style("fill-opacity", 0.3);
-						})
-						.on("mouseleave", function(d) { 
-							d3.select(this).style("fill-opacity", 1);
-							tip.hide(d);
-						})
-						.on("click", function(d) {
-							$(".towns").each(function(i) {
-								this.style.strokeWidth = "1px";
-								this.style.stroke = "#000";
-							});
-							d3.select(this.parentNode.appendChild(this))
-								.transition().duration(100)
-									.style("stroke-width", "4px")
-									.style("stroke", "#ff0000");
-							for (var i=0; i<CTPS.vmtApp.data.length; i++) {
-								if (+CTPS.vmtApp.data[i].properties.TOWN_ID === +this.id) {
-									// Reorder data so selected town moved to last element in array.
-									// Needed in order to properly update data, d3 thinks this town
-									// was drawn last and will improperly update the map otherwise
-									CTPS.vmtApp.data.move(i, CTPS.vmtApp.data.length-1);
-								};
-							};
-							
-							// Log and save Town Name for Table caption
-							CTPS.vmtApp.currentTown = toTitleCase(d.properties.TOWN);
-							
-							// Load Table to display relevent table
-							$("#selected_town").val(+d.properties.TOWN_ID);
-							CTPS.vmtApp.displayTable(d.properties);
-						});
+        // Create SVG <path> for towns
+        var towns = topojson.feature(CTPS.vmtApp.geoData_2016, CTPS.vmtApp.geoData_2016.objects.MA_TOWNS_MPO97).features;
+        mpo.selectAll("path")
+            .data(towns)
+            .enter()
+            .append("path")
+                .attr("id", function(d, i) { return +(d.properties.TOWN_ID); })
+                .attr("class", "towns")
+                .attr("d", function(d, i) { return geoPath(d); })
+                .style("stroke", "#black")
+                .style("stroke-width", "1px")
+                .on("mouseenter", function(d) { 
+                    tip.show(d); 
+                    d3.select(this).style("cursor", "pointer")
+                                   .style("fill-opacity", 0.3);
+                })
+                .on("mouseleave", function(d) { 
+                    d3.select(this).style("fill-opacity", 1);
+                    tip.hide(d);
+                })
+                .on("click", function(d) {
+                    $(".towns").each(function(i) {
+                        this.style.strokeWidth = "1px";
+                        this.style.stroke = "#000";
+                    });
+                    d3.select(this.parentNode.appendChild(this))
+                        .transition().duration(100)
+                            .style("stroke-width", "4px")
+                            .style("stroke", "#ff0000");
+                    alert("Funky code by Ethan #1.");
+                /*
+                    for (var i=0; i<CTPS.vmtApp.data.length; i++) {
+                        if (+CTPS.vmtApp.data[i].properties.TOWN_ID === +this.id) {
+                            // Reorder data so selected town moved to last element in array.
+                            // Needed in order to properly update data, d3 thinks this town
+                            // was drawn last and will improperly update the map otherwise
+                            CTPS.vmtApp.data.move(i, CTPS.vmtApp.data.length-1);
+                        };
+                    };
+                */
+                    alert("TBD: load table with data for town");
+                /*                
+                    // Log and save Town Name for Table caption
+                    CTPS.vmtApp.currentTown = toTitleCase(d.properties.TOWN);
+                    
+                    // Load Table to display relevent table
+                    $("#selected_town").val(+d.properties.TOWN_ID);
+                    CTPS.vmtApp.displayTable(d.properties);
+                */
+                });
 
-				// Create SVG <path> for MA State Outline
-				state.selectAll("#vmtState")
-					.data(CTPS.vmtApp.topoOutline)
-					.enter()
-					.append("path")
-						.attr("id", "MA_State_Outline")
-						.attr("d", function(d, i) { return geoPath(d); })
-						.style("fill", "#f0f0f0")
-						.style("stroke", "#bdbdbd")
-						.style("stroke-width", "0.2px");
+        // Create SVG <path> for MA State Outline
+        state.selectAll("#vmtState")
+            .data(CTPS.vmtApp.topoOutline)
+            .enter()
+            .append("path")
+                .attr("id", "MA_State_Outline")
+                .attr("d", function(d, i) { return geoPath(d); })
+                .style("fill", "#f0f0f0")
+                .style("stroke", "#bdbdbd")
+                .style("stroke-width", "0.2px");
 				
-				// Create Scale Bar
-				// Code from: https://bl.ocks.org/ThomasThoren/6a543c4d804f35a240f9, but also check out:
-				// https://stackoverflow.com/questions/44222003/how-to-add-or-create-a-map-scale-bar-to-a-map-created-with-d3-js
-				// because maths might be more accurate
-				function pixelLength(this_topojson, this_projection, miles) {
-					// Calculates the window pixel length for a given map distance.
-					// Not sure if math is okay, given arcs, projection distortion, etc.
+        // Create Scale Bar
+        // Code from: https://bl.ocks.org/ThomasThoren/6a543c4d804f35a240f9, but also check out:
+        // https://stackoverflow.com/questions/44222003/how-to-add-or-create-a-map-scale-bar-to-a-map-created-with-d3-js
+        // because maths might be more accurate
+        function pixelLength(this_topojson, this_projection, miles) {
+            // Calculates the window pixel length for a given map distance.
+            // Not sure if math is okay, given arcs, projection distortion, etc.
 
-					var actual_map_bounds = d3.geoBounds(this_topojson);
+            var actual_map_bounds = d3.geoBounds(this_topojson);
 
-					var radians = d3.geoDistance(actual_map_bounds[0], actual_map_bounds[1]);
-					var earth_radius = 3959;  // miles
-					var arc_length = earth_radius * radians;  // s = r * theta
+            var radians = d3.geoDistance(actual_map_bounds[0], actual_map_bounds[1]);
+            var earth_radius = 3959;  // miles
+            var arc_length = earth_radius * radians;  // s = r * theta
 
-					var projected_map_bounds = [
-						this_projection(actual_map_bounds[0]),
-						this_projection(actual_map_bounds[1])
-					];
+            var projected_map_bounds = [
+                this_projection(actual_map_bounds[0]),
+                this_projection(actual_map_bounds[1])
+            ];
 
-					var projected_map_width = projected_map_bounds[1][0] - projected_map_bounds[0][0];
-					var projected_map_height = projected_map_bounds[0][1] - projected_map_bounds[1][1];
-					var projected_map_hypotenuse = Math.sqrt(
-						(Math.pow(projected_map_width, 2)) + (Math.pow(projected_map_height, 2))
-					);
+            var projected_map_width = projected_map_bounds[1][0] - projected_map_bounds[0][0];
+            var projected_map_height = projected_map_bounds[0][1] - projected_map_bounds[1][1];
+            var projected_map_hypotenuse = Math.sqrt(
+                (Math.pow(projected_map_width, 2)) + (Math.pow(projected_map_height, 2))
+            );
 
-					var pixels_per_mile = projected_map_hypotenuse / arc_length;
-					var pixel_distance = pixels_per_mile * miles;
+            var pixels_per_mile = projected_map_hypotenuse / arc_length;
+            var pixel_distance = pixels_per_mile * miles;
 
-					return pixel_distance;
-				};
+            return pixel_distance;
+        } // pixelLength()
+
+/*				
+		var pixels_10mi = pixelLength(topojson.feature(topotowns, topotowns.objects.MA_TOWNS_MPO101), projection, 10);
 				
-				var pixels_10mi = pixelLength(topojson.feature(topotowns, topotowns.objects.MA_TOWNS_MPO101), projection, 10);
-				
-				scaleBar.append("rect")
-					.attr("x", $('#map').width() - 15 - pixels_10mi)
-					.attr("y", $('#map').height() - 25)
-					.attr("width", pixels_10mi)
-					.attr("height", 2.5)
-					.style("fill", "#000");
-				scaleBar.append('text')
-					.attr("x", $('#map').width() - 15 - pixels_10mi)
-					.attr("y", $('#map').height() - 8)
-					.attr("text-anchor", "start")
-					.text("10 miles");
-			});	
-	};	//CTPS.vmtApp.initMap()
+        scaleBar.append("rect")
+            .attr("x", $('#map').width() - 15 - pixels_10mi)
+            .attr("y", $('#map').height() - 25)
+            .attr("width", pixels_10mi)
+            .attr("height", 2.5)
+            .style("fill", "#000");
+        scaleBar.append('text')
+            .attr("x", $('#map').width() - 15 - pixels_10mi)
+            .attr("y", $('#map').height() - 8)
+            .attr("text-anchor", "start")
+            .text("10 miles");
+    });	
+*/
+	};	// initMap()
 	
 	// Initialize legend (hidden on load)
 	CTPS.vmtApp.initLegend = function() {
@@ -757,7 +724,7 @@ function vmtAppInit() {
 		// Initialize Map
 		CTPS.vmtApp.csvData = CTPS.vmtApp.displayYear(2016); //load 2016 data on start
 
-		CTPS.vmtApp.initMap();
+		// CTPS.vmtApp.initMap();
 		
 		// Set the "alt" and "title" attributes of the page element containing the map.
 		$('#map').attr("alt","Map of Boston Region MPO town boundaries");
@@ -765,10 +732,7 @@ function vmtAppInit() {
 		
 		// Initialize Map Legend
 		CTPS.vmtApp.initLegend();
-		
-		// Initialize Table
-		CTPS.vmtApp.initGrids();
-		
+
 		// Initialize Event Handlers
 		CTPS.vmtApp.initHandlers();
 	};
