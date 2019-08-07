@@ -42,10 +42,17 @@ CTPS.vmtApp.tabularData_2040 = {};
 CTPS.vmtApp.geoData_2016  = {};
 CTPS.vmtApp.geoData_2040  = {};
 
+// Raw TopoJSON for MPO towns
+CTPS.vmtApp.topoTowns = {};
+// GeoJSON for MPO towns
+CTPS.vmtApp.townFeatures = {};
+// GeoJSON for MA outside of MPO region
+CTPS.vmtApp.outsideMpoFeatures = {};
+
 // Accessible grid
 CTPS.vmtApp.data_grid;
 
-// Array of map themes
+// Array of names of map themes
 CTPS.vmtApp.themes = ["THEME_VMT", "THEME_VHT", "THEME_VOC", "THEME_NOX", "THEME_CO",  "THEME_CO2" ];
 
 // Lookup Table for Map and Legend palettes, text
@@ -163,8 +170,6 @@ CTPS.vmtApp.currentTownID = 0;
 var helpData = "vmtAppHelp.html";
     
 function vmtAppInit() {
-    // Initialize accessible tabs
-    $('.tabs').accessibleTabs();
     // On-click event handler for Help button
     $('#help_button').click(function(e) {
         popup(helpData);
@@ -204,21 +209,16 @@ function vmtAppInit() {
 			CTPS.vmtApp.currentTown = $('#selected_town :selected').text();
 			CTPS.vmtApp.currentTownID = iTownId;
             
-			// Harvest the 2016 and 2040 data for the selected town
-            var rec_2016 = {}, rec_2040 = {};
-			for (i = 0; i < CTPS.vmtApp.tabularData_2016.length; i++) {
-				if (+(CTPS.vmtApp.tabularData_2016[i].TOWN_ID) === iTownId){
-					rec_2016 = CTPS.vmtApp.tabularData_2016[i];
-                    rec_2040 = CTPS.vmtApp.tabularData_2040[i];
-					break;
-				}
-			}
-            
+			// Harvest the 2016 and 2040 data for the selected town           
+            var rec_2016 = _.find(CTPS.vmtApp.tabularData_2016, function(rec) { return rec.TOWN_ID === iTownId; });
+            var rec_2040 = _.find(CTPS.vmtApp.tabularData_2040, function(rec) { return rec.TOWN_ID === iTownId; });
+           
             // Create accessible grid
             var colDesc = [ { header : 'Metric', dataIndex : 'METRIC' }, 
                             { header : '2016', 	 dataIndex : 'DATA_2016' }, 
                             { header : '2040', 	 dataIndex : 'DATA_2040' }
             ]; 
+            $('#town_data_grid').html('');
             CTPS.vmtApp.data_grid = new AccessibleGrid( 
                                         {   divId 	:	    'town_data_grid',
                                             tableId 	:	'town_table',
@@ -235,8 +235,7 @@ function vmtAppInit() {
             dataToLoad[2] = { 'METRIC' : 'VOC (kilograms)', 'DATA_2016' : rec_2016.VOC_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VOC_TOTAL.toLocaleString() };
             dataToLoad[3] = { 'METRIC' : 'NOX (kilograms)', 'DATA_2016' : rec_2016.NOX_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.NOX_TOTAL.toLocaleString() };
             dataToLoad[4] = { 'METRIC' : 'CO (kilograms)', 'DATA_2016' : rec_2016.CO_TOTAL.toLocaleString(),  'DATA_2040' : rec_2040.CO_TOTAL.toLocaleString() };
-            dataToLoad[5] = { 'METRIC' : 'CO2 (kilograms)', 'DATA_2016' : rec_2016.CO2_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.CO2_TOTAL.toLocaleString() };
-            
+            dataToLoad[5] = { 'METRIC' : 'CO2 (kilograms)', 'DATA_2016' : rec_2016.CO2_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.CO2_TOTAL.toLocaleString() };            
             CTPS.vmtApp.data_grid.loadArrayData(dataToLoad);
         
         /*
@@ -283,13 +282,12 @@ function vmtAppInit() {
                           'URL :' + error.responseURL);
                     return;
                 }                   
-                var topoTowns = results[0];
-                var topoOutline = results[1];                    
+                var topoTowns = results[0];     // Geometry of MPO towns
+                var nonMpo = results[1];        // Geometry of MA outside MPO region                 
                 CTPS.vmtApp.tabularData_2016 = results[2];
                 CTPS.vmtApp.tabularData_2040 = results[3]; 
 
-                // *** Process tabular data loaded
-                
+                // *** Process tabular data loaded               
                 function parseCSV(rec) {
                     rec.TOWN_ID = +rec.TOWN_ID;
                     rec.VMT_TOTAL = +rec.VMT_TOTAL;
@@ -298,14 +296,19 @@ function vmtAppInit() {
                     rec.NOX_TOTAL = +rec.NOX_TOTAL;
                     rec.CO_TOTAL  = +rec.CO_TOTAL;
                     rec.CO2_TOTAL = +rec.CO2_TOTAL;
-                } // parseCSV()
-                
+                } // parseCSV()                
                 CTPS.vmtApp.tabularData_2016.forEach(parseCSV);
                 CTPS.vmtApp.tabularData_2040.forEach(parseCSV);
  
                  var _DEBUG_HOOK_0 = 0;
                  
                 // *** Process spatial data loaded
+                // Cache raw TopoJSON for MPO towns - it will be needed to render scale bar for map
+                CTPS.vmtApp.topoTowns = topoTowns;
+                // 'Inflate' TopoJSON for MPO towns into GeoJSON
+                CTPS.vmtApp.townFeatures = topojson.feature(topoTowns, topoTowns.objects.MA_TOWNS_MPO97).features;
+                
+                _DEBUG_HOOK_1 = 0;
                 
                 // Make a 'deep' copy of topoTowns
                 var topoTowns2 = Object.assign({}, topoTowns);
@@ -325,10 +328,11 @@ function vmtAppInit() {
                 CTPS.vmtApp.geoData_2016 = topoTowns;
                 joinGeoWithTabular(topoTowns2, CTPS.vmtApp.tabularData_2040);
                 CTPS.vmtApp.geoData_2040 = topoTowns2;
-                                     
-                CTPS.vmtApp.topoOutline = topojson.feature(topoOutline, topoOutline.objects.MA_TOWNS_NON_MPO97).features;
                 
-                var _DEBUG_HOOK_1 = 0;
+                // 'Inflate' TopoJSON for MA geometry outside of MPO into GeoJSON
+                CTPS.vmtApp.outsideMpoFeatures = topojson.feature(nonMpo, nonMpo.objects.MA_TOWNS_NON_MPO97).features;
+                
+                var _DEBUG_HOOK_2 = 0;
                 
                 initMap();
                 
@@ -412,7 +416,8 @@ function vmtAppInit() {
 						  'URL :' + error.responseURL);
 					return;
 				}
-				// No errors, bind data values
+				// No errors, bind data values 
+                // *** NB 'topoOutline changed to CTPS.vmtApp.outsideMpoFeatures
 				var topoOutline = results[2];
 				CTPS.vmtApp.topoOutline = topojson.feature(topoOutline, topoOutline.objects.MA_TOWNS_NON_MPO97).features;
 				
@@ -431,7 +436,7 @@ function vmtAppInit() {
 */
 				
         // Create SVG <path> for towns
-        var towns = topojson.feature(CTPS.vmtApp.geoData_2016, CTPS.vmtApp.geoData_2016.objects.MA_TOWNS_MPO97).features;
+        var towns = CTPS.vmtApp.townFeatures;
         mpo.selectAll("path")
             .data(towns)
             .enter()
@@ -483,7 +488,7 @@ function vmtAppInit() {
 
         // Create SVG <path> for MA State Outline
         state.selectAll("#vmtState")
-            .data(CTPS.vmtApp.topoOutline)
+            .data(CTPS.vmtApp.outsideMpoFeatures)
             .enter()
             .append("path")
                 .attr("id", "MA_State_Outline")
@@ -522,9 +527,13 @@ function vmtAppInit() {
 
             return pixel_distance;
         } // pixelLength()
-
-/*				
-		var pixels_10mi = pixelLength(topojson.feature(topotowns, topotowns.objects.MA_TOWNS_MPO101), projection, 10);
+        
+        
+        // *** TBD: Correct reference to 'topotowns' in next statement ***
+/*		
+		// var pixels_10mi = pixelLength(topojson.feature(topotowns, topotowns.objects.MA_TOWNS_MPO101), projection, 10);
+*/        
+        pixels_10mi = pixelLength(topojson.feature(CTPS.vmtApp.topoTowns, CTPS.vmtApp.topoTowns.objects.MA_TOWNS_MPO97), projection, 10);
 				
         scaleBar.append("rect")
             .attr("x", $('#map').width() - 15 - pixels_10mi)
@@ -537,9 +546,8 @@ function vmtAppInit() {
             .attr("y", $('#map').height() - 8)
             .attr("text-anchor", "start")
             .text("10 miles");
-    });	
-*/
-	};	// initMap()
+
+	}	// initMap()
 	
 	// Initialize legend (hidden on load)
 	CTPS.vmtApp.initLegend = function() {
@@ -682,14 +690,7 @@ function vmtAppInit() {
 				$(".tabs").showAccessibleTabSelector(CTPS.vmtApp.themesLookup[themeVal].tabSelect);
 			};
 		});
-		
-		// Display Data Table for Municipality
-		$("#selected_town").change(function(e) {
-			CTPS.vmtApp.renderTown();
-		});
-		
-
-		
+				
 		// Bind theme names as class name to table tabs
 		for (var i=0; i<CTPS.vmtApp.themes.length; i++) {
 			$(CTPS.vmtApp.themesLookup[CTPS.vmtApp.themes[i]].tabSelect).addClass(CTPS.vmtApp.themes[i]);
