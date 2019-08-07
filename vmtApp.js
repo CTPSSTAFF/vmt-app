@@ -6,10 +6,12 @@
  *		traveled (VMT), vehicle hours traveled (VHT), and emissions data for the 101 cities 
  *		and towns in the Boston Region Metropolitan Planning Organization (MPO).
  *
- *  Latest update:
+ *  Major version 3:
  *      08/2019 -- Ben Krepp
- *	Previout update:
+ *	Major version 2:
  *		09/2017 -- Ethan Ebinger
+ *  Major version 1:
+ *      circa 2014 -- Mary McShane
  *	
  *	Data sources: 
  *		1) Central Transportation Planning Staff of the Boston Region Metropolitan Planning Organization
@@ -17,13 +19,12 @@
  *
  *	This application depends on the following libraries:
  *		1) jQuery -- for DOM navigation
- *		2) d3 -- for map visualization, loading CSV data
- *		3) d3-tip -- for tooltips in d3 visualizations
- *		4) topojson -- for loading topojson data for map visualization
- *		5) Accessible Grid -- for rendering HTML tables that are navigable by screen readers
- *		6) Accessible Tabs -- for navigating HTML tables
- *		7) Simple Sliding Doors -- for navigating HTML tables
- *		8) ctpsutils -- custom library with arrays of towns in MPO region and in MA
+ *      2) underscore.js -- "the tie to go along with jQuery's tux and Backbone's suspenders"
+ *		3) d3 -- for map visualization, loading CSV data
+ *		4) d3-tip -- for tooltips in d3 visualizations
+ *		5) topojson -- for processing data in TopoJSON format
+ *		6) accessibleGrid jQuery plugin -- for rendering HTML tables that are navigable by screen readers
+ *		7) ctpsutils -- custom library with arrays of towns in MPO region and in MA
  *	
  */
   
@@ -51,11 +52,11 @@ CTPS.vmtApp.outsideMpoFeatures = {};
 CTPS.vmtApp.data_grid;
 
 // Array of names of map themes
-CTPS.vmtApp.themes = ["THEME_VMT", "THEME_VHT", "THEME_VOC", "THEME_NOX", "THEME_CO",  "THEME_CO2" ];
+CTPS.vmtApp.themeNames = ["THEME_VMT", "THEME_VHT", "THEME_VOC", "THEME_NOX", "THEME_CO",  "THEME_CO2" ];
 
 // Lookup Table for Map and Legend palettes, text
 // Domains emperically split on approximatley the 25th, 50th, and 75th percentile values -- for 2012 data
-CTPS.vmtApp.themesLookup = {	
+CTPS.vmtApp.themes = {	
     "THEME_VMT": {	"threshold": d3.scaleThreshold()
                                     .domain([230000, 560000, 920000])
                                     .range(["#febfdc", "#fe80b9", "#d62e6c", "#a10048"]),
@@ -131,15 +132,6 @@ CTPS.vmtApp.themesLookup = {
 function popup(url) {
     popupWindow = window.open(url,'popUpWindow','height=700,width=800,left=10,top=10,resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no,status=yes');
 }
-//Functions to Hide/Unhide Tabs -- exists this way to remove individual class names if multiple exist
-function hideTab() {
-    var e = document.getElementById('mytabs');
-    e.className += ' hidden';
-}
-function unhideTab() {
-    var e = document.getElementById('mytabs');
-    e.className = e.className.replace(/hidden/gi,"");
-}
 // Function to capitalize only first letter of Town names
 // https://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript/196991#196991
 function toTitleCase(str) {
@@ -179,16 +171,16 @@ function vmtAppInit() {
         });	
     });
 	// Populate "Select Map Theme" combo box
-	for (i = 0; i < CTPS.vmtApp.themes.length; i++) {
-		$("#selected_theme").append(
+	for (i = 0; i < CTPS.vmtApp.themeNames.length; i++) {
+		$("#select_theme").append(
 			$("<option />")
-				.val(CTPS.vmtApp.themes[i])
-				.text(CTPS.vmtApp.themesLookup[CTPS.vmtApp.themes[i]]["mapTheme"])
+				.val(CTPS.vmtApp.themeNames[i])
+				.text(CTPS.vmtApp.themes[CTPS.vmtApp.themeNames[i]]["mapTheme"])
 		);
 	}
 	// Populate "Select A Municipality" combo box
 	for (i = 0; i < CTPSUTILS.aMpoTowns.length; i++) {
-		$("#selected_town").append(
+		$("#select_town").append(
 			$("<option />")
 				.val(CTPSUTILS.aMpoTowns[i][0])
 				.text(toTitleCase(CTPSUTILS.aMpoTowns[i][1]))
@@ -196,15 +188,15 @@ function vmtAppInit() {
 	}
     
     // Arm on-change event handler for select_town combo box
-    $("#selected_town").change(function(e) {
+    $("#select_town").change(function(e) {
         var i;
-    	var iTownId = +$('#selected_town :selected').val();		
+    	var iTownId = +$('#select_town :selected').val();		
 		if (!iTownId > 0){
 			alert('No city or town selected. Please try selecting a town again from either the dropdown or the map.');
 			return;
 		} else {
 			// Save town name and ID
-			CTPS.vmtApp.currentTown = $('#selected_town :selected').text();
+			CTPS.vmtApp.currentTown = $('#select_town :selected').text();
 			CTPS.vmtApp.currentTownID = iTownId;
             
 			// Harvest the 2016 and 2040 data for the selected town           
@@ -236,7 +228,6 @@ function vmtAppInit() {
             dataToLoad[5] = { 'METRIC' : 'CO2 (kilograms)', 'DATA_2016' : rec_2016.CO2_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.CO2_TOTAL.toLocaleString() };            
             CTPS.vmtApp.data_grid.loadArrayData(dataToLoad);
         
-
 			// Change highlighted town on map to reflect selected town
 			$(".towns").each(function(i) {
 				if ( +this.id === +iTownId ) {
@@ -262,6 +253,62 @@ function vmtAppInit() {
 			});
 		} // if-else
 	}); // On-change event handler for select_town combo box
+
+    // Symbolize map on selected theme and data year, and update legend
+    function symbolizeMap(theme, year) {
+        // Get color palette for selected theme
+        var pathcolor = CTPS.vmtApp.themes[theme]["threshold"];
+        basePropName = theme.replace('THEME_','');
+        
+        // Update Map
+        CTPS.vmtApp.svgMPO.selectAll("path")
+            .data(CTPS.vmtApp.townFeatures)
+            .transition()
+            .duration(1000)
+            .ease(d3.easeLinear)
+            .style("fill", function(d, i) {
+                var retval;
+                var yearPropsName = 'data_' + year;
+                var propName = basePropName + '_TOTAL';
+                var propVal = d.properties[yearPropsName][propName];
+                var retval = pathcolor(propVal);
+                return retval;
+            });
+        
+        // Update Legend
+        $("#legend_title").text(CTPS.vmtApp.themes[theme].mapTheme);
+        $('#pointer').text(CTPS.vmtApp.themes[theme].legendTheme);
+        CTPS.vmtApp.legend.select("rect")
+            .data(CTPS.vmtApp.themes[theme]["legendDomain"])
+            .transition()
+            .duration(1000)
+            .ease(d3.easeLinear)
+            .style("fill", function(d, i) { 
+                return pathcolor(d);
+            })
+            .style("opacity", "0.7")
+            .style("stroke", "#000");
+        CTPS.vmtApp.legend.select("text")
+            .data(CTPS.vmtApp.themes[theme]["legendText"])
+            .transition()
+            .duration(1000)
+            .ease(d3.easeLinear)
+            .text(function(d, i) { 
+                return CTPS.vmtApp.themes[theme]["legendText"][i]; 
+            });       
+    } // symbolizeMap()
+
+    // Arm on-change event handler for select_theme and select_year combo boxes
+    $('#select_theme, #select_year').change(function(e) {
+        var themeVal = $('#select_theme :selected').val();
+        // var themeText = $('#select_theme :selected').text();
+        var yearVal = $('#select_year :selected').val();
+        if (themeVal === 'no_theme') {
+            return;
+        } else { 
+            symbolizeMap(themeVal, yearVal);
+        } 
+    }); 
       
 	//////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -319,11 +366,13 @@ function vmtAppInit() {
                 // 'Inflate' the TopoJSON for geometry of MA outside of the MPO region into GeoJSON
                 CTPS.vmtApp.outsideMpoFeatures = topojson.feature(nonMpo, nonMpo.objects.MA_TOWNS_NON_MPO97).features;
                 
-                initMap();               
-            }); // q.awaitAll()    
+                initMap();  
+                initLegend();
+                // Set the "alt" and "title" attributes of the page element containing the map.
+                $('#map').attr("alt","Map of Boston Region MPO town boundaries");
+                $('#map').attr("title","Map of Boston Region MPO town boundaries");
+            }); // await all data loaded successfully   
     
-
-	
 	// Pseudo-contants for map and legend rendering
 	var width = $('#map').width(),
 		height = $('#map').height(),
@@ -334,7 +383,7 @@ function vmtAppInit() {
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	//
-	// Map and Map Legend Initialization/Rendering Functions
+	// Map and map legend initialization
 	//
 	var initMap = function() {
 		// Define projection: Mass State Plane NAD 83 Meters.
@@ -378,41 +427,8 @@ function vmtAppInit() {
 		CTPS.vmtApp.svgMPO = mpo;				// Saved for later updates in CTPS.vmtApp.renderTheme() 
 		var scaleBar = svg.append("g")				// "g" element defined to display scale bar
 			.attr("id", "distance_scale");
-
-/*		
-		d3.queue()
-			.defer(d3.json, jsonData)
-			.defer(d3.csv, CTPS.vmtApp.csvData)
-			.defer(d3.json, MAoutline)
-			.awaitAll(function(error, results) {
-				// Check for errors
-				if (error !== null) {
-					alert('Failure loading JSON or CSV file.\n' +
-						  'Status: ' + error.status + '\n' +
-						  'Status text: ' + error.statusText + '\n' +
-						  'URL :' + error.responseURL);
-					return;
-				}
-				// No errors, bind data values 
-                // *** NB 'topoOutline changed to CTPS.vmtApp.outsideMpoFeatures
-				var topoOutline = results[2];
-				CTPS.vmtApp.topoOutline = topojson.feature(topoOutline, topoOutline.objects.MA_TOWNS_NON_MPO97).features;
-				
-				// Merge CSV data with JSON data to create JSON object ('CTPS.vmtApp.data') for app
-				var topotowns = results[0];
-				var csv = results[1];
-				var towns = topojson.feature(topotowns, topotowns.objects.MA_TOWNS_MPO97).features;
-				for (var i=0; i<towns.length; i++) {
-					for (var j=0; j<csv.length; j++) {
-						if (+towns[i].properties.TOWN_ID === +csv[j].TOWN_ID) {
-							towns[i].properties = csv[j];
-						};
-					};
-				};
-				CTPS.vmtApp.data = towns;	// CSV data merged with JSON data to create JSON object with CTPS.vmtApp.data for app
-*/
-				
-        // Create SVG <path> for towns
+			
+        // Create SVG <path>s for towns
         var towns = CTPS.vmtApp.townFeatures;
         mpo.selectAll("path")
             .data(towns)
@@ -441,8 +457,9 @@ function vmtAppInit() {
                         .transition().duration(100)
                             .style("stroke-width", "4px")
                             .style("stroke", "#ff0000");
-                    alert("Funky code by Ethan #1.");
+                    
                 /*
+                    alert("Funky code by Ethan #1.");
                     for (var i=0; i<CTPS.vmtApp.data.length; i++) {
                         if (+CTPS.vmtApp.data[i].properties.TOWN_ID === +this.id) {
                             // Reorder data so selected town moved to last element in array.
@@ -452,18 +469,18 @@ function vmtAppInit() {
                         };
                     };
                 */
-                    alert("TBD: load table with data for town");
+                    alert("*** TBD: load accessibl table with data for town");
                 /*                
                     // Log and save Town Name for Table caption
                     CTPS.vmtApp.currentTown = toTitleCase(d.properties.TOWN);
                     
                     // Load Table to display relevent table
-                    $("#selected_town").val(+d.properties.TOWN_ID);
+                    $("#select_town").val(+d.properties.TOWN_ID);
                     CTPS.vmtApp.displayTable(d.properties);
                 */
                 });
 
-        // Create SVG <path> for MA State Outline
+        // Create SVG <path>s for outline of MA outside MPO region
         state.selectAll("#vmtState")
             .data(CTPS.vmtApp.outsideMpoFeatures)
             .enter()
@@ -522,7 +539,7 @@ function vmtAppInit() {
 	} // initMap()
 	
 	// Initialize legend (hidden on load)
-	CTPS.vmtApp.initLegend = function() {
+	var initLegend = function() {
 		var svgLegend = d3.select("#legend_div")
 			.append("svg")
 			.attr("id", "my_legend")
@@ -545,7 +562,7 @@ function vmtAppInit() {
 			.attr("x", legendRectSize + legendSpacing)
 			.attr("y", legendRectSize - legendSpacing);
 		CTPS.vmtApp.legend = legend;
-	}	//CTPS.vmtApp.initLegend()
+	} // initLegend()
 	
 	//////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -553,125 +570,9 @@ function vmtAppInit() {
 	//
 	//////////////////////////////////////////////////////////////////////////////////////
 	CTPS.vmtApp.renderTheme = function() {
-		var themeVal = $('#selected_theme :selected').val();
-		var themeText = $('#selected_theme :selected').text();
-		if (themeText !== "Select Map Theme") {
-			
-			// Define color palette
-			var pathcolor = CTPS.vmtApp.themesLookup[themeVal]["threshold"];
-			
-			// Update Map
-			CTPS.vmtApp.svgMPO.selectAll("path")
-				.data(CTPS.vmtApp.data)
-				.transition()
-				.duration(1000)
-				.ease(d3.easeLinear)
-				.style("fill", function(d, i) {
-					return pathcolor(d.properties[CTPS.vmtApp.themesLookup[themeVal]["total"]]);
-				});
-			
-			// Update Legend
-			$("#legend_title").text(CTPS.vmtApp.themesLookup[themeVal].mapTheme);
-			$('#pointer').text(CTPS.vmtApp.themesLookup[themeVal].legendTheme);
-			CTPS.vmtApp.legend.select("rect")
-				.data(CTPS.vmtApp.themesLookup[themeVal]["legendDomain"])
-				.transition()
-				.duration(1000)
-				.ease(d3.easeLinear)
-				.style("fill", function(d, i) { 
-					return pathcolor(d);
-				})
-				.style("opacity", "0.7")
-				.style("stroke", "#000");
-			CTPS.vmtApp.legend.select("text")
-				.data(CTPS.vmtApp.themesLookup[themeVal]["legendText"])
-				.transition()
-				.duration(1000)
-				.ease(d3.easeLinear)
-				.text(function(d, i) { 
-					return CTPS.vmtApp.themesLookup[themeVal]["legendText"][i]; 
-				});
-			
-			// Change Accessible Table Tab
-			// From: http://blog.ginader.de/dev/jquery/accessible-tabs/open-tab-from-link-2.html
-			// $(".tabs").showAccessibleTabSelector(CTPS.vmtApp.themesLookup[themeVal].tabSelect);
-			
-		} else {
-			alert('No theme selected. Please try selecting a theme again from either the dropdown or the table.');
-			return;
-		};
 	}; // CTPS.vmtApp.renderTheme()
-	
 	CTPS.vmtApp.initHandlers = function() {
-		// Load data on new year select 
-		$("#display_year").change(function(e) {
-			// Select CSV with data from selected year
-			var year = +$('#display_year :selected').val();
-			CTPS.vmtApp.csvData = CTPS.vmtApp.displayYear(year);
-			
-			// Load TopoJSON and CSV data, and merge TopoJSON and CSV data for 97 MPO municipalities into CTSP.vmtApp.data
-			d3.queue()
-				.defer(d3.csv, CTPS.vmtApp.csvData)
-				.awaitAll(function(error, results) {
-					// Check for errors
-					if (error !== null) {
-						alert('Failure loading JSON or CSV file.\n' +
-							  'Status: ' + error.status + '\n' +
-							  'Status text: ' + error.statusText + '\n' +
-							  'URL :' + error.responseURL);
-						return;
-					}
-					// No errors, bind data values
-					// Merge CSV data with JSON data to create JSON object ('CTPS.vmtApp.data') for app
-					var csv = results[0];
-					var towns = CTPS.vmtApp.data;
-					for (var i=0; i<towns.length; i++) {
-						for (var j=0; j<csv.length; j++) {
-							if (+towns[i].properties.TOWN_ID === +csv[j].TOWN_ID) {
-								towns[i].properties = csv[j];
-							};
-						};
-					};
-					CTPS.vmtApp.data = towns;	// CSV data merged with JSON data to create JSON object with CTPS.vmtApp.data for app
-					
-					// Render Map (if statement to bypass alert in function)
-					if ($('#selected_theme :selected').val().length > 0) {
-						CTPS.vmtApp.renderTheme();
-					};
-					
-					// Render Table (if statement to bypass alert in function)
-					var iTownId = +$('#selected_town :selected').val();
-					if (iTownId > 0){
-						CTPS.vmtApp.renderTown();
-					};
-				});
-		});
-		
-		// Change Map Theme display on click (and update corresponding legend).
-		// 	The event changes the tab, which then calls the 'CTPS.vmtApp.renderTheme' function. This is
-		//	done because 'showAccessibleTabSelector' registers as a 'click' by the table. If the 
-		//	'CTPS.vmtApp.renderTheme' function was to be called here directly it would send the page into
-		//	an infinite loop where the page keeps trying to render the same map over and over.
-		$('#selected_theme').change(function(e) {
-			var themeVal = $('#selected_theme :selected').val();
-			//Change Accessible Table Tab: http://blog.ginader.de/dev/jquery/accessible-tabs/open-tab-from-link-2.html
-			if (!themeVal.length > 0){
-				alert('No theme selected. Please try selecting a theme again from either the dropdown or the table.');
-				return;
-			} else {
-				$(".tabs").showAccessibleTabSelector(CTPS.vmtApp.themesLookup[themeVal].tabSelect);
-			};
-		});
-				
-		// Bind theme names as class name to table tabs
-		for (var i=0; i<CTPS.vmtApp.themes.length; i++) {
-			$(CTPS.vmtApp.themesLookup[CTPS.vmtApp.themes[i]].tabSelect).addClass(CTPS.vmtApp.themes[i]);
-		};
-		// Change map theme display on table tab switch
-		$('#vmt, #vht, #voc, #nox, #co, #co2').click(function(e) {
-			$("#selected_theme").val(e.target.className);
-			CTPS.vmtApp.renderTheme();
-		});
+
 	}; // CTPS.vmtApp.initHandlers()
 	
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -679,35 +580,7 @@ function vmtAppInit() {
 	//	6)	Application Initialization, Data Selection
 	//
 	//////////////////////////////////////////////////////////////////////////////////////
-	CTPS.vmtApp.displayYear = function(year) {
-		switch (year) {
-			case 2016:
-				return csvData_2016;
-				break;;
-			case 2040:
-				return csvData_2040;
-				break;
-			default:
-				alert("Please select a year from the dropdown.");
-				break;
-		};
-	};
-	
 	CTPS.vmtApp.init = function() {   
-		// Initialize Map
-		CTPS.vmtApp.csvData = CTPS.vmtApp.displayYear(2016); //load 2016 data on start
-
-		// CTPS.vmtApp.initMap();
-		
-		// Set the "alt" and "title" attributes of the page element containing the map.
-		$('#map').attr("alt","Map of Boston Region MPO town boundaries");
-		$('#map').attr("title","Map of Boston Region MPO town boundaries");
-		
-		// Initialize Map Legend
-		CTPS.vmtApp.initLegend();
-
-		// Initialize Event Handlers
-		CTPS.vmtApp.initHandlers();
 	};
 	
 	// Initialize App
