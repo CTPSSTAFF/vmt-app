@@ -36,11 +36,10 @@ var MA_outline = "data/MA_TOWNS_NON_MPO97.json";
 var csvData_2016 = "data/CTPS_TOWNS_MAPC_97_VMT_2016.csv";
 var csvData_2040 = "data/CTPS_TOWNS_MAPC_97_VMT_2040.csv";
 
-// Data loaded by app
+// Tabular data loaded by app
 CTPS.vmtApp.tabularData_2016 = {};
 CTPS.vmtApp.tabularData_2040 = {};
-
-// Raw TopoJSON for MPO towns
+// Raw TopoJSON for MPO towns loaded by app
 CTPS.vmtApp.topoTowns = {};
 // GeoJSON for MPO towns
 CTPS.vmtApp.townFeatures = {};
@@ -150,18 +149,11 @@ Array.prototype.move = function (old_index, new_index) {
     return this; // for testing purposes
 }
 
-
-CTPS.vmtApp.data = {};          // probably fossil
-CTPS.vmtApp.csvData = '';       // probably fossil
-
-CTPS.vmtApp.currentTown = '';  
-CTPS.vmtApp.currentTownID = 0;  
-var helpData = "vmtAppHelp.html";
-    
 function vmtAppInit() {
     // Arm on-click event handler for Help button
     $('#help_button').click(function(e) {
-        popup(helpData);
+        var helpPage = "vmtAppHelp.html";
+        popup(helpPage);
     });
     // Arm on-click event handler for Download buttons
     $('#download_button_2016, #download_button_2040').each(function() { 
@@ -186,6 +178,42 @@ function vmtAppInit() {
 		);
 	}
     
+    // Render accessible table of data for specified town
+    function displayTabularDataForTown(iTownId) {
+        // Harvest the 2016 and 2040 data for the selected town                  
+        var townRec = _.find(CTPS.vmtApp.townFeatures, function(feature) { return feature.properties['TOWN_ID'] === iTownId; });
+        var rec_2016 = townRec.properties['data_2016'];
+        var rec_2040 = townRec.properties['data_2040'];
+        
+        // The full town name, properly capitalized, is found in either of the two sets of tabluar data
+        var townName = rec_2016['TOWN'];
+     
+        // Create accessible grid
+        var colDesc = [ { header : 'Metric', dataIndex : 'METRIC' }, 
+                        { header : '2016', 	 dataIndex : 'DATA_2016' }, 
+                        { header : '2040', 	 dataIndex : 'DATA_2040' }
+        ]; 
+        $('#town_data_grid').html('');
+        CTPS.vmtApp.data_grid = new AccessibleGrid( 
+                                    {   divId 	:	    'town_data_grid',
+                                        tableId 	:	'town_table',
+                                        summary		: 	'Table columns are name of metric, value of metric for 2016, and value of metric for 2040.',
+                                        caption		:	'Data for ' + townName,
+                                        ariaLive	:	'assertive',
+                                        colDesc		: 	colDesc
+                            });
+        
+        // Load grid with data for town
+        var dataToLoad = [];
+        dataToLoad[0] = { 'METRIC' : 'VMT (miles)', 'DATA_2016' : rec_2016.VMT_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VMT_TOTAL.toLocaleString() };
+        dataToLoad[1] = { 'METRIC' : 'VHT (hours)', 'DATA_2016' : rec_2016.VHT_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VHT_TOTAL.toLocaleString() };
+        dataToLoad[2] = { 'METRIC' : 'VOC (kilograms)', 'DATA_2016' : rec_2016.VOC_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VOC_TOTAL.toLocaleString() };
+        dataToLoad[3] = { 'METRIC' : 'NOX (kilograms)', 'DATA_2016' : rec_2016.NOX_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.NOX_TOTAL.toLocaleString() };
+        dataToLoad[4] = { 'METRIC' : 'CO (kilograms)', 'DATA_2016' : rec_2016.CO_TOTAL.toLocaleString(),  'DATA_2040' : rec_2040.CO_TOTAL.toLocaleString() };
+        dataToLoad[5] = { 'METRIC' : 'CO2 (kilograms)', 'DATA_2016' : rec_2016.CO2_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.CO2_TOTAL.toLocaleString() };            
+        CTPS.vmtApp.data_grid.loadArrayData(dataToLoad);    
+    } // displayTabularDataForTown()
+    
     // Arm on-change event handler for select_town combo box
     $("#select_town").change(function(e) {
         var i;
@@ -193,40 +221,8 @@ function vmtAppInit() {
 		if (!iTownId > 0){
 			alert('No city or town selected. Please try selecting a town again from either the dropdown or the map.');
 			return;
-		} else {
-			// Save town name and ID
-			CTPS.vmtApp.currentTown = $('#select_town :selected').text();
-			CTPS.vmtApp.currentTownID = iTownId;
-            
-			// Harvest the 2016 and 2040 data for the selected town           
-            var rec_2016 = _.find(CTPS.vmtApp.tabularData_2016, function(rec) { return rec.TOWN_ID === iTownId; });
-            var rec_2040 = _.find(CTPS.vmtApp.tabularData_2040, function(rec) { return rec.TOWN_ID === iTownId; });
-           
-            // Create accessible grid
-            var colDesc = [ { header : 'Metric', dataIndex : 'METRIC' }, 
-                            { header : '2016', 	 dataIndex : 'DATA_2016' }, 
-                            { header : '2040', 	 dataIndex : 'DATA_2040' }
-            ]; 
-            $('#town_data_grid').html('');
-            CTPS.vmtApp.data_grid = new AccessibleGrid( 
-                                        {   divId 	:	    'town_data_grid',
-                                            tableId 	:	'town_table',
-                                            summary		: 	'Table columns are name of metric, value of metric for 2016, and value of metric for 2040.',
-                                            caption		:	'Data for ' + CTPS.vmtApp.currentTown,
-                                            ariaLive	:	'assertive',
-                                            colDesc		: 	colDesc
-                                });
-            
-            // Load grid with data for town
-            var dataToLoad = [];
-            dataToLoad[0] = { 'METRIC' : 'VMT (miles)', 'DATA_2016' : rec_2016.VMT_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VMT_TOTAL.toLocaleString() };
-            dataToLoad[1] = { 'METRIC' : 'VHT (hours)', 'DATA_2016' : rec_2016.VHT_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VHT_TOTAL.toLocaleString() };
-            dataToLoad[2] = { 'METRIC' : 'VOC (kilograms)', 'DATA_2016' : rec_2016.VOC_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VOC_TOTAL.toLocaleString() };
-            dataToLoad[3] = { 'METRIC' : 'NOX (kilograms)', 'DATA_2016' : rec_2016.NOX_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.NOX_TOTAL.toLocaleString() };
-            dataToLoad[4] = { 'METRIC' : 'CO (kilograms)', 'DATA_2016' : rec_2016.CO_TOTAL.toLocaleString(),  'DATA_2040' : rec_2040.CO_TOTAL.toLocaleString() };
-            dataToLoad[5] = { 'METRIC' : 'CO2 (kilograms)', 'DATA_2016' : rec_2016.CO2_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.CO2_TOTAL.toLocaleString() };            
-            CTPS.vmtApp.data_grid.loadArrayData(dataToLoad);
-        
+		} else {       
+            displayTabularDataForTown(iTownId)                 
 			// Change highlighted town on map to reflect selected town
 			$(".towns").each(function(i) {
 				if ( +this.id === +iTownId ) {
@@ -235,16 +231,6 @@ function vmtAppInit() {
 						.transition().duration(100)
 							.style("stroke-width", "4px")
 							.style("stroke", "#ff0000");
-                    /*
-					for (var i=0; i<CTPS.vmtApp.data.length; i++) {
-						if (+CTPS.vmtApp.data[i].properties.TOWN_ID === +this.id) {
-							// Reorder data so selected town moved to last element in array.
-							// Needed in order to properly update data, d3 thinks this town
-							// was drawn last and will improperly update the map otherwise
-							CTPS.vmtApp.data.move(i, CTPS.vmtApp.data.length-1);
-						}
-					}
-                    */
 				} else {
 					this.style.strokeWidth = "1px";
 					this.style.stroke = "#000";
@@ -370,7 +356,7 @@ function vmtAppInit() {
                 // Set the "alt" and "title" attributes of the page element containing the map.
                 $('#map').attr("alt","Map of Boston Region MPO town boundaries");
                 $('#map').attr("title","Map of Boston Region MPO town boundaries");
-            }); // await all data loaded successfully   
+            }); // awaitAll data loaded successfully   
     
 	// Pseudo-contants for map and legend rendering
 	var width = $('#map').width(),
@@ -396,12 +382,13 @@ function vmtAppInit() {
 							.translate([80,780]);
 		var geoPath = d3.geoPath(projection);
 		
-		//Define tooltip
+		// Define tooltip
 		var tip = d3.tip()
 			.attr('class', 'd3-tip')
 			.offset([-5, 0])
 			.html(function(d) {
-				return "<strong>" + toTitleCase(d.properties.TOWN) + "</strong>";
+                // Note: The full town name, properly capitalized, is found in either of the two sets of tabluar data
+                return "<strong>" + toTitleCase(d.properties['data_2016'].TOWN) + "</strong>";
 			});
 		
 		// Initialize Map
@@ -448,6 +435,7 @@ function vmtAppInit() {
                     tip.hide(d);
                 })
                 .on("click", function(d) {
+                    displayTabularDataForTown(d.properties['TOWN_ID']);
                     $(".towns").each(function(i) {
                         this.style.strokeWidth = "1px";
                         this.style.stroke = "#000";
@@ -456,27 +444,6 @@ function vmtAppInit() {
                         .transition().duration(100)
                             .style("stroke-width", "4px")
                             .style("stroke", "#ff0000");
-                    
-                /*
-                    alert("Funky code by Ethan #1.");
-                    for (var i=0; i<CTPS.vmtApp.data.length; i++) {
-                        if (+CTPS.vmtApp.data[i].properties.TOWN_ID === +this.id) {
-                            // Reorder data so selected town moved to last element in array.
-                            // Needed in order to properly update data, d3 thinks this town
-                            // was drawn last and will improperly update the map otherwise
-                            CTPS.vmtApp.data.move(i, CTPS.vmtApp.data.length-1);
-                        };
-                    };
-                */
-                    alert("*** TBD: load accessibl table with data for town");
-                /*                
-                    // Log and save Town Name for Table caption
-                    CTPS.vmtApp.currentTown = toTitleCase(d.properties.TOWN);
-                    
-                    // Load Table to display relevent table
-                    $("#select_town").val(+d.properties.TOWN_ID);
-                    CTPS.vmtApp.displayTable(d.properties);
-                */
                 });
 
         // Create SVG <path>s for outline of MA outside MPO region
