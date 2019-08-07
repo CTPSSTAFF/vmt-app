@@ -176,7 +176,11 @@ h3 {
 .tabhead {
 	display: none;
 }
-
+#town_data_grid_container {
+    margin-top: 20px;
+    margin-right: 20px;
+    border: 1.5px solid #1d2c2;
+}
 #town_data_grid {
 /*	border: 1px solid blue;
 	margin-top: 10px;		/**/
@@ -184,8 +188,10 @@ h3 {
 	padding: 3px;
 	font-size: 1.2em;
     height: 260px;
+    padding-left: 30px;
+    padding-top: 30px;
+    background-color: #daddee;
 }
-
 #town_data_grid th {
 /*	border: 0.2px solid blue;   
 	border-collapse: collapse;   /**/
@@ -210,6 +216,11 @@ h3 {
     text-align: right;
     width: 150px;
 }
+#town_data_grid table caption {
+    font-size: 20px;
+    padding-bottom: 10px;
+}
+
 /*
 td:hover {
 	cursor: text;
