@@ -27,7 +27,6 @@
  *		7) ctpsutils -- custom library with arrays of towns in MPO region and in MA
  *	
  */
-  
 var CTPS = {};
 CTPS.vmtApp = {};
 
