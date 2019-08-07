@@ -32,10 +32,10 @@
 			<div id="left_container">
 				<div id="appDescription" class="offscreen"> <!--	for screen readers -->
 					Below is a map of Massachusetts that displays themes in categories by town after selecting a 
-					theme from a dropdown combo box. Themes available are: vehicle miles of travel, vehicle hours 
-					of travel, volatile organic compounds, nitrous oxides, carbon monoxide, and carbon dioxide.
+					theme from a dropdown combo box. Themes available are: vehicle miles traveled, vehicle hours 
+					travled, volatile organic compounds, nitrous oxides, carbon monoxide, and carbon dioxide.
 					Data for themes by municipality can be displayed in accessible tables by selecting municipality 
-					from a combo box. Six tables will open for showing data modeled for Charting Progress to 2040, 
+					from a combo box. Six tables will open for showing data modeled for Destination 2040, 
 					the current long range transportation plan for the Boston region, for the selected theme and town.
 				</div>
 				
@@ -54,8 +54,11 @@
 						</select>
 					</div>
 				</div>
+                            
 				<div id="map"></div>
+                
 				<div id="pointer" aria-live="assertive"></div>
+                
 				<div id="legend_div" aria-live="assertive">
 					<span id="legend_title"></span>
 				</div>
@@ -63,13 +66,11 @@
 			<!--	end 'left_container'   -->
 
 			<div id="right_container" role="application">
-                <h2>Display Data for One Municipality:</h2>
-				<div id='town_dropdown'>
+                <h2>Display Data for One Municipality:</h2>               
+                 <div id='right_ui_controls'>
 					<select id="select_town" title="Select a municipality" tabindex="20">
 						<option value="">Select a municipality</option>
 					</select>
-				</div>
-				<div id='buttonBank'>
 					<span id="download_button_2016">
 						<input type="button" id="download_data" tabindex="35" value="Download Data - 2016" />
 						<a id="downloadAnchorTag" href="https://ctps.org/pub/VMT_and_Emissions_Data/CTPS_TOWNS_MAPC_VMT_2016.xls"></a>
@@ -78,14 +79,16 @@
 						<input type="button" id="download_data" tabindex="35" value="Download Data - 2040" />
 						<a id="downloadAnchorTag" href="https://ctps.org/pub/VMT_and_Emissions_Data/CTPS_TOWNS_MAPC_VMT_2040.xls"></a>
 					</span>
-					
 					<!--  NOTE: this button format specifically chosen to display image to which alt attribute applied to let screen-reader know about new window   -->
 					<button type="button" id="help_button">
 						<img src="images/newwindow-example.gif" alt="Help link opens new browser window"/>
 						&nbsp;&nbsp;Help
 					</button>
 				</div>
-                <div id="town_data_grid">
+                             
+                <div id="town_data_grid_container">
+                    <div id="town_data_grid">
+                    </div>
                 </div>
 			</div>
 			<!--	end 'right_container -->
