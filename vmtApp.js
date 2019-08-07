@@ -53,73 +53,67 @@ CTPS.vmtApp.data_grid;
 CTPS.vmtApp.themeNames = ["THEME_VMT", "THEME_VHT", "THEME_VOC", "THEME_NOX", "THEME_CO",  "THEME_CO2" ];
 
 // Lookup Table for Map and Legend palettes, text
-// Domains emperically split on approximatley the 25th, 50th, and 75th percentile values -- for 2012 data
+// Domains emperically split on approximatley the 25th, 50th, and 75th percentile values for 2016 data
 CTPS.vmtApp.themes = {	
     "THEME_VMT": {	"threshold": d3.scaleThreshold()
-                                    .domain([230000, 560000, 920000])
+                                    .domain([250000, 580000, 930000, Infinity])
                                     .range(["#febfdc", "#fe80b9", "#d62e6c", "#a10048"]),
                     "mapTheme": "Vehicle Miles Traveled",
                     "total": "VMT_TOTAL",
                     "legendTheme": "Daily total of modeled vehicle miles traveled (VMT), per municipality.",
-                    "legendText": ["< 230,000 miles", "230,000-560,000 miles", "560,000-920,000 miles", "> 920,000 miles"],
-                    "legendDomain": [0, 300000, 700000, 2000000],
-                    "legendRange": ["#febfdc", "#fe80b9", "#d62e6c", "#a10048"],
-                    "tabSelect": "#vmt"
+                    "legendText": ["< 250,000 miles", "250,000-580,000 miles", "580,000-930,000 miles", "> 930,000 miles"],
+                    "legendDomain": [250000, 580000, 9300000, Infinity],
+                    "legendRange": ["#febfdc", "#fe80b9", "#d62e6c", "#a10048"]
                 },
     "THEME_VHT": {	"threshold": d3.scaleThreshold()
-                                    .domain([7000, 16000, 28000])
+                                    .domain([8000, 17000, 32000, Infinity])
                                     .range(["#d4ffd4", "#a9d6a8", "#53ad51", "#1d6b1b"]),
                     "mapTheme": "Vehicle Hours Traveled",
                     "total": "VHT_TOTAL",
                     "legendTheme": "Daily total of modeled vehicle hours traveled (VHT), per municipality.",
-                    "legendText": ["< 7,000 hours","7,000-16,000 hours", "16,000-28,000 hours", "> 28,000 hours"],
-                    "legendDomain": [0, 10000, 20000, 30000],
-                    "legendRange": ["#d4ffd4", "#a9d6a8", "#53ad51", "#1d6b1b"],
-                    "tabSelect": "#vht"
+                    "legendText": ["< 8,000 hours", "8,000-17,000 hours", "17,000-32,000 hours", "> 32,000 hours"],
+                    "legendDomain": [8000, 17000, 32000, Infinity],
+                    "legendRange": ["#d4ffd4", "#a9d6a8", "#53ad51", "#1d6b1b"]
                 },
     "THEME_VOC": {	"threshold": d3.scaleThreshold()
-                                    .domain([25, 60, 100])
+                                    .domain([10, 30, 50, Infinity])
                                     .range(["#FEF7E7", "#E79484", "#BD4A39", "#8C0808"]),
                     "mapTheme": "Volatile Organic Compounds",
                     "total": "VOC_TOTAL",
-                    "legendTheme": "Daily total of modeled grams of volatile organic compounds (VOC) emitted, per municipality.",
-                    "legendText":  ["< 25 grams", "25-60 grams", "60-100 grams", "> 100 grams"], 
-                    "legendDomain": [0, 30, 70, 200],
-                    "legendRange": ["#FEF7E7", "#E79484", "#BD4A39", "#8C0808"],
-                    "tabSelect": "#voc"
+                    "legendTheme": "Daily total of modeled kilograms of volatile organic compounds (VOC) emitted, per municipality.",
+                    "legendText":  ["< 10 kilograms", "10-30 kilograms", "30-50 kilograms", "> 50 kilograms"], 
+                    "legendDomain": [10, 30, 50, 200, Infinity],
+                    "legendRange": ["#FEF7E7", "#E79484", "#BD4A39", "#8C0808"]
                 },
     "THEME_NOX": {	"threshold": d3.scaleThreshold()
-                                    .domain([150, 350, 600])
+                                    .domain([60, 150, 250, Infinity])
                                     .range(["#e7fec8", "#cffe91", "#86d51e", "#5e9515"]),
                     "mapTheme": "Nitrogen Oxides",
                     "total": "NOX_TOTAL",
-                    "legendTheme": "Daily total of modeled grams of nitrogen oxides (NOX) emitted, per municipality.",
-                    "legendText": ["< 150 grams", "150-350 grams", "350-600 grams", "> 600 grams"],
-                    "legendDomain": [0, 200, 400, 2500],
-                    "legendRange": ["#e7fec8", "#cffe91", "#86d51e", "#5e9515"],
-                    "tabSelect": "#nox"
+                    "legendTheme": "Daily total of modeled kilograms of nitrogen oxides (NOX) emitted, per municipality.",
+                    "legendText": ["< 60 kilograms", "60-150 kilograms", "150-250 kilograms", "> 250 kilograms"],
+                    "legendDomain": [60, 150, 250, Infinity],
+                    "legendRange": ["#e7fec8", "#cffe91", "#86d51e", "#5e9515"]
                 },
     "THEME_CO" : {	"threshold": d3.scaleThreshold()
-                                    .domain([700, 1700, 3000])
+                                    .domain([600, 1500, 2400, Infinity])
                                     .range(["#bffffe", "#80fffe", "#0fb3bc", "#006b6b"]),
                     "mapTheme": "Carbon Monoxide",
                     "total": "CO_TOTAL",
-                    "legendTheme": "Daily total of modeled grams of carbon monoxide (CO) emitted, per municipality.",
-                    "legendText": ["< 700 grams", "700-1,700 grams", "1,700-3,000 grams", "> 3,000 grams"],
-                    "legendDomain": [0, 1000, 2000, 3500],
-                    "legendRange": ["#bffffe", "#80fffe", "#0fb3bc", "#006b6b"],
-                    "tabSelect": "#co"
+                    "legendTheme": "Daily total of modeled kilograms of carbon monoxide (CO) emitted, per municipality.",
+                    "legendText": ["< 600 kilograms", "600-1,500 kilograms", "1,500-2,400 kilograms", "> 2,400 kilograms"],
+                    "legendDomain": [600, 1500, 2400, Infinity],
+                    "legendRange": ["#bffffe", "#80fffe", "#0fb3bc", "#006b6b"]
                 },
     "THEME_CO2": {	"threshold": d3.scaleThreshold()
-                                    .domain([100000, 250000, 500000])
+                                    .domain([100000, 250000, 400000, Infinity])
                                     .range(["#ecd9fe", "#d9b3f3", "#824aba", "#5b3482"]),
                     "mapTheme": "Carbon Dioxide",
                     "total": "CO2_TOTAL",
-                    "legendTheme": "Daily total of modeled grams of carbon dioxide (CO2) emitted, per municipality.",
-                    "legendText": ["< 100,000 grams", "100,000-250,000 grams", "250,000-500,000 grams", "> 500,000 grams"],
-                    "legendDomain": [0, 200000, 450000, 2000000],
-                    "legendRange": ["#ecd9fe", "#d9b3f3", "#824aba", "#5b3482"], 
-                    "tabSelect": "#co2"
+                    "legendTheme": "Daily total of modeled kilograms of carbon dioxide (CO2) emitted, per municipality.",
+                    "legendText": ["< 100,000 kilograms", "100,000-250,000 kilograms", "250,000-400,000 kilograms", "> 500,000 kilograms"],
+                    "legendDomain": [100000, 250000, 400000, Infinity],
+                    "legendRange": ["#ecd9fe", "#d9b3f3", "#824aba", "#5b3482"]
                 }
 };
 
@@ -150,6 +144,8 @@ Array.prototype.move = function (old_index, new_index) {
 }
 
 function vmtAppInit() {
+    // Hide town data grid container, and thus the town data grid itself
+    $('#town_data_grid_container').hide();
     // Arm on-click event handler for Help button
     $('#help_button').click(function(e) {
         var helpPage = "vmtAppHelp.html";
@@ -180,6 +176,7 @@ function vmtAppInit() {
     
     // Render accessible table of data for specified town
     function displayTabularDataForTown(iTownId) {
+        $('#town_data_grid_container').show();
         // Harvest the 2016 and 2040 data for the selected town                  
         var townRec = _.find(CTPS.vmtApp.townFeatures, function(feature) { return feature.properties['TOWN_ID'] === iTownId; });
         var rec_2016 = townRec.properties['data_2016'];
@@ -426,6 +423,7 @@ function vmtAppInit() {
                 .style("stroke", "#black")
                 .style("stroke-width", "1px")
                 .on("mouseenter", function(d) { 
+                    // console.log(d.properties['TOWN'] + ' ' + d.properties['data_2016'].TOWN);
                     tip.show(d); 
                     d3.select(this).style("cursor", "pointer")
                                    .style("fill-opacity", 0.3);
@@ -435,6 +433,7 @@ function vmtAppInit() {
                     tip.hide(d);
                 })
                 .on("click", function(d) {
+                    var i;
                     displayTabularDataForTown(d.properties['TOWN_ID']);
                     $(".towns").each(function(i) {
                         this.style.strokeWidth = "1px";
@@ -444,6 +443,19 @@ function vmtAppInit() {
                         .transition().duration(100)
                             .style("stroke-width", "4px")
                             .style("stroke", "#ff0000");
+                    // Comment by Ethan Ebinger:
+                    // Reorder data so selected town moved to last element in array.
+                    // Needed in order to properly update data: d3 thinks this town
+                    // was drawn last and will improperly update the map otherwise.
+                    for (i = 0; i < CTPS.vmtApp.townFeatures.length; i++) {
+								if (+CTPS.vmtApp.townFeatures[i].properties.TOWN_ID === +this.id) {
+                                    // Comment by Ethan Ebinger:
+									// Reorder data so selected town moved to last element in array.
+									// Needed in order to properly update data: d3 thinks this town
+									// was drawn last and will improperly update the map otherwise.
+									CTPS.vmtApp.townFeatures.move(i, CTPS.vmtApp.townFeatures.length-1);
+								}
+							}     
                 });
 
         // Create SVG <path>s for outline of MA outside MPO region
