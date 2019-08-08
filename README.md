@@ -36,4 +36,4 @@ This app depends upon the following external libraries:
   5. CTPS accessibleGrid.js
   6. CTPS ctpsutils.js
 
-Previous versions of this app depended upon verion 1.9.4 of the jQuery accessibleTabs library.
+Previous versions of this app depended upon verion 1.9.4 of the jQuery accessibleTabs plugin.
