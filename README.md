@@ -1,7 +1,7 @@
 # vmt-app
 VMT/VHT/Emissions data browser for Boston Region MPO
 
-The initial version of the source code and data being checked-in to this repository is that written by Ethan Ebinger (circa 2017), which was derived from a previous one written by Mary McShane (crica 2014.) The McShane version was based upon using a WFS data source; the Ebinger version is based upon using GeoJSON and CSV data sources.
+The initial version of the source code and data being checked-in to this repository is that written by Ethan Ebinger (circa 2017), which was derived from a previous one written by Mary McShane (crica 2014.) The McShane version was based upon using a WFS data source; the Ebinger version is based upon using TopoJSON and CSV data sources.
 
 This app depends upon the following external libraries:
   1. jQuery.js version 1.7.1
