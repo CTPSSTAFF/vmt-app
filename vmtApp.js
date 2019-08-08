@@ -1,22 +1,29 @@
 /**
  *	Boston Region MPO Vehicle Miles Traveled and Emissions Data Browser
  *	
- *	Application description:
- *		This application may be used to browse CTPS's database of modeled vehicle miles 
- *		traveled (VMT), vehicle hours traveled (VHT), and emissions data for the 101 cities 
- *		and towns in the Boston Region Metropolitan Planning Organization (MPO).
+ *	Description:
+ *		This application may be used to browse CTPS's data on modeled vehicle miles 
+ *		traveled (VMT), vehicle hours traveled (VHT), and emissions data for the 97
+ *     (formerly 101) cities and towns in the Boston Region Metropolitan Planning 
+  *     Organization (MPO) region.
  *
  *  Major version 3:
  *      08/2019 -- Ben Krepp
+ *      This version uses CSV and TopoJSON file data sources, and rendered data in the
+ *      client using the d3.js library. The CSV data sources supply a single "total"
+ *      data value for VMT, VHT, and the emissions factors, for each town. 
  *	Major version 2:
  *		09/2017 -- Ethan Ebinger
+ *      This version used CSV and TopoJSON file data sources, and rendered data in the
+ *      client using the d3.js library. The CSV data sources broke out VMT, VHT, and
+ *      emissions data for each town by time period (morning peak, mid-day, evening
+ *      peak, and night hours) and by vehicle class (single occupant vehicles, 
+ *      high occupant vehicles, trucks, and all vehicles.)
  *  Major version 1:
  *      circa 2014 -- Mary McShane
+ *      This version used datasources housed in an Oracle/ArcSDE database, published
+ *      by GeoServer, and rendered data in the client by OpenLayers (version 2).
  *	
- *	Data sources: 
- *		1) Central Transportation Planning Staff of the Boston Region Metropolitan Planning Organization
- *		2) Massachusetts Office of Geographic Information (MassGIS)
- *
  *	This application depends on the following libraries:
  *		1) jQuery -- for DOM navigation
  *      2) underscore.js -- "the tie to go along with jQuery's tux and Backbone's suspenders"
@@ -26,11 +33,35 @@
  *		6) accessibleGrid jQuery plugin -- for rendering HTML tables that are navigable by screen readers
  *		7) ctpsutils -- custom library with arrays of towns in MPO region and in MA
  *	
+ *  Data Sources
+ *
+ *  This application reads 4 input data files:
+ *
+ *  1. MPO_towns - TopoJSON for the 97 cities and towns in the Boston MPO region. This data was derived
+ *                 directly from the MassGIS (Massachusetts Office of Geographic Information) TOWNS_POLYM data layer.
+ *  2. MA_outline - TopoJSON for the area within Massachusetts outside of the Boston MPO reion.
+ *                  This data was derived from the MassGIS (Massachusetts Office of Geographic Information) TOWNS_POLYM data layer.
+ *  3. csvData_2016 - CSV file containing modeled VMT, VHT, and emissions (VOC, NOX, CO and CO2)
+ *                    data for 2016 for the 97 cities and towns in the Boston MPO region.
+ *                    The source of this data is the CTPS Modeling Group.
+ *  4. csvData_2016 - CSV file containing modeled VMT, VHT, and emissions (VOC, NOX, CO and CO2)
+ *                    data for 2040 for the 97 cities and towns in the Boston MPO region.
+ *                    The source of this data is the CTPS Modeling Group.
+ *
+ *  Primary Internal Data Structure
+ *
+ *  After reading the 4 input data files, this application constructs the primary internal data structure
+ *  it uses, CTPS.vmtApp.townFeatures, from data sources (1), (2), and (3). This data structure consists
+ *  of the logical 'join' of (1) with (3) and (4) on the "TOWN_ID" field. In particular, two properties
+ *  are added to the property array of each feature in (1): data_2016 and data_2040. The former is (3);
+ *  the latter is (4).
+ * 
+ * -- B. Krepp 8 August 2019
  */
 var CTPS = {};
 CTPS.vmtApp = {};
 
-// Data sources
+// Input data files
 var MPO_towns = "data/MA_TOWNS_MPO97.json";
 var MA_outline = "data/MA_TOWNS_NON_MPO97.json";
 var csvData_2016 = "data/CTPS_TOWNS_MAPC_97_VMT_2016.csv";
@@ -41,7 +72,7 @@ CTPS.vmtApp.tabularData_2016 = {};
 CTPS.vmtApp.tabularData_2040 = {};
 // Raw TopoJSON for MPO towns loaded by app
 CTPS.vmtApp.topoTowns = {};
-// GeoJSON for MPO towns
+// GeoJSON for MPO towns - this is the primary data structure manipulated by this app
 CTPS.vmtApp.townFeatures = {};
 // GeoJSON for MA outside of MPO region
 CTPS.vmtApp.outsideMpoFeatures = {};
@@ -52,7 +83,7 @@ CTPS.vmtApp.data_grid;
 // Array of names of map themes
 CTPS.vmtApp.themeNames = ["THEME_VMT", "THEME_VHT", "THEME_VOC", "THEME_NOX", "THEME_CO",  "THEME_CO2" ];
 
-// Lookup Table for Map and Legend palettes, text
+// Lookup table for map and legend color palettes, and text for legends
 // Domains emperically split on approximatley the 25th, 50th, and 75th percentile values for 2016 data
 CTPS.vmtApp.themes = {	
     "THEME_VMT": {	"threshold": d3.scaleThreshold()
@@ -115,7 +146,7 @@ CTPS.vmtApp.themes = {
                     "legendDomain": [100000, 250000, 400000, Infinity],
                     "legendRange": ["#ecd9fe", "#d9b3f3", "#824aba", "#5b3482"]
                 }
-};
+}; // CTPS.vmtApp.themes {}
 
 //////////////////////////////////////////////////////////////////////////////////////
 //  Utility Functions
@@ -542,25 +573,4 @@ function vmtAppInit() {
 		CTPS.vmtApp.legend = legend;
 	} // initLegend()
 	
-	//////////////////////////////////////////////////////////////////////////////////////
-	//
-	//	5)	Event Handlers
-	//
-	//////////////////////////////////////////////////////////////////////////////////////
-	CTPS.vmtApp.renderTheme = function() {
-	}; // CTPS.vmtApp.renderTheme()
-	CTPS.vmtApp.initHandlers = function() {
-
-	}; // CTPS.vmtApp.initHandlers()
-	
-	//////////////////////////////////////////////////////////////////////////////////////
-	//
-	//	6)	Application Initialization, Data Selection
-	//
-	//////////////////////////////////////////////////////////////////////////////////////
-	CTPS.vmtApp.init = function() {   
-	};
-	
-	// Initialize App
-	CTPS.vmtApp.init();
-};
+} // vmtAppInit()
