@@ -1,4 +1,4 @@
-/**
+/*
  *	Boston Region MPO Vehicle Miles Traveled and Emissions Data Browser
  *	
  *	Description:
@@ -21,8 +21,8 @@
  *      high occupant vehicles, trucks, and all vehicles.)
  *  Major version 1:
  *      circa 2014 -- Mary McShane
- *      This version used datasources housed in an Oracle/ArcSDE database, published
- *      by GeoServer, and rendered data in the client by OpenLayers (version 2).
+ *      This version used data sources housed in an Oracle/ArcSDE database, published
+ *      by GeoServer as WFSs, and rendered data in the client by OpenLayers (version 2).
  *	
  *	This application depends on the following libraries:
  *		1) jQuery -- for DOM navigation
