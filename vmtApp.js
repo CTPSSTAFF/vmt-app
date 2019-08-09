@@ -89,7 +89,7 @@ CTPS.vmtApp.themes = {
     "THEME_VMT": {	"threshold": d3.scaleThreshold()
                                     .domain([250000, 580000, 930000, Infinity])
                                     .range(["#febfdc", "#fe80b9", "#d62e6c", "#a10048"]),
-                    "mapTheme": "Vehicle Miles Traveled",
+                    "mapTheme": "Vehicle-Miles Traveled",
                     "total": "VMT_TOTAL",
                     "legendTheme": "Daily total of modeled vehicle miles traveled (VMT), per municipality.",
                     "legendText": ["< 250,000 miles", "250,000-580,000 miles", "580,000-930,000 miles", "> 930,000 miles"],
@@ -99,7 +99,7 @@ CTPS.vmtApp.themes = {
     "THEME_VHT": {	"threshold": d3.scaleThreshold()
                                     .domain([8000, 17000, 32000, Infinity])
                                     .range(["#d4ffd4", "#a9d6a8", "#53ad51", "#1d6b1b"]),
-                    "mapTheme": "Vehicle Hours Traveled",
+                    "mapTheme": "Vehicle-Hours Traveled",
                     "total": "VHT_TOTAL",
                     "legendTheme": "Daily total of modeled vehicle hours traveled (VHT), per municipality.",
                     "legendText": ["< 8,000 hours", "8,000-17,000 hours", "17,000-32,000 hours", "> 32,000 hours"],

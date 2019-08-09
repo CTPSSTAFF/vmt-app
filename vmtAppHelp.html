@@ -25,6 +25,11 @@
 			font-size: .9em;
 			color: #000000;
 		}
+        ol li {
+			font-family: Arial, Helvetica, sans-serif;
+			font-size: .9em;
+			color: #000000;        
+        }
 		a {
 			text-decoration: none;
 		}
@@ -42,6 +47,7 @@
 		table {
 			border-top: 3px double black;       /* TEMP */
 			border-bottom: 3px double black;
+            width: 100%;
 		}
         thead {
             border-bottom: 3px double black;
@@ -83,68 +89,64 @@
 		<br/>
 		<h2>Boston Region MPO Vehicle-Miles Traveled and Emissions Data Browser</h2>
 		<h3>Introduction </h3>
-		<p>You may use this application to browse Central Transportation Planning Staff’s (CTPS) database of modeled vehicle-miles traveled (VMT), 
-           vehicle-hours traveled (VHT), and emissions data for the 97 cities and towns in the Boston Region Metropolitan Planning Organization (MPO). 
-           The data are for the 2016 base year and 2040 future year. CTPS modeled these data for the publication, Destination 2040, which is the current 
-           Long-Range Transportation Plan (LRTP) for the Boston region. 
-           The future-year scenarios include proposed key regional transportation projects identified in the plan (see                    
+		<p>This application allows users to browse Central Transportation Planning Staff’s (CTPS) database of modeled vehicle-miles traveled (VMT), vehicle-hours traveled (VHT), 
+           and emissions data for the 97 cities and towns in the Boston Region Metropolitan Planning Organization (MPO). 
+           The data represent that collected for the 2016 base year and 2040 future year. CTPS modeled these data for <span style="font-style:italic">Destination 2040</span>, 
+           which is the current Long-Range Transportation Plan (LRTP) for the Boston region. The future-year scenarios include proposed key regional 
+           transportation projects identified in the plan (see                  
 			<a href="https://www.ctps.org/data/pdf/plans/LRTP/destination/Destination-2040-LRTP-DRAFT-072519.pdf"/>
 				https://www.ctps.org/data/pdf/plans/LRTP/destination/Destination-2040-LRTP-DRAFT-072519.pdf
 			</a>
 			, pages 4-11 to 4-12). 
 		</p>
-		<p>
-        The MPO adopts a new LRTP every four years. For a variety of reasons there can be differences in the regional emissions from one LRTP to another.  
-        A significant source of potential change is from changes in travel patterns over time. The base year in the previous plan was 2012, 
-        the base year for Destination 2040 is 2016. 
-        Travel in 2016 is different from travel in 2012because the land use inputs fed into the model are different. 
-        Another source of change in regional emissions estimates could be from changes in the model structure itself. 
-        For example, the regional model in 2012 only included eastern Massachusetts whereas the model used for the 2016 LRTP included all of Massachusetts, 
-        Rhode Island and some of New Hampshire. 
+		<p>The MPO adopts a new LRTP every four years. Differences in the regional emissions from one LRTP to another may exist for a variety of reasons. 
+           One source of potential change may result from the changes in travel patterns over time. 
+           The base year in the previous plan was 2012; the base year for <span style="font-style:italic">Destination 2040</span> is 2016. 
+           Travel in 2016 is different from travel in 2012 because the land use data input into the model are different. 
+           Another source of change in regional emission estimates may occur from changes in the model structure itself. 
+           For example, the regional model in 2012 only included eastern Massachusetts, whereas the model used for the 2016 LRTP included all of Massachusetts, 
+           Rhode Island, and some of New Hampshire.
 		</p>
-		<p>You may download the data in a comma-separated values (CSV) format, which popular spreadsheet programs, such as Microsoft Excel and Apache Open Office Calc, can read.
+		<p>Users may download data in a comma-separated values (CSV) format, which popular spreadsheet programs, such as Microsoft Excel and Apache Open Office Calc, can read.
 		</p>
 		<h3>Using the Application</h3>
 		<p>This application allows you to query and display data in five ways:
 			<ol>
 				<li>
-				You may get VMT, VHT, and emissions data for a particular town or city by selecting a municipality in the “Select a Municipality” combo box. 
-                The selected municipality is outlined in red on the map, and the data for it is displayed in the tabbed panel on the right side of the application window.	
+                To obtain VMT, VHT, and emissions data for a particular town or city, select a municipality within the map. 
+                The selected municipality is outlined in red on the map, and the data for it is displayed in the panel on the right side of the application window.
 				</li>
 				<li>
-				You also may obtain VMT, VHT, and emissions data for a particular town or city by clicking on a municipality within the map. 
-                The selected municipality is outlined in red on the map, and the data for it is displayed in the tabbed panel on the right side of the application window.	
+                To select the map’s theme (for example, VMT), choose a theme from the “Select Map Theme” drop down box. 
 				</li>
 				<li>
-				You may display the map’s theme by selecting a theme (such as vehicle-miles traveled) from the “Select Map Theme” combo box.	
+                To change the year of modeled data displayed, select a year from the “Select Year” drop down box. 
+                The 2016 base year is set as the default. The other available year is the 2040 future year.
 				</li>
 				<li>
-				You may change the year of modeled data displayed by selecting a year from the “Display Year” combo box. 
-                The available years are the 2016 base year, and 2040 future year, with the 2016 base year as the default.	
+                To retrieve VMT, VHT, and emissions data for a particular town or city, select a municipality in the “Select a Municipality” drop down box under 
+                Display Data for One Municipality. The selected municipality is outlined in red on the map, and the data for it is displayed in the table on the right side of the application window.
 				</li>
+                <li>
+                To download data in CSV format, select from the download options based on the year you wish to retrieve.
+                </li>
 			</ol>
 		</p>
-		<h3>Data Sources</h3>
-		<p>The data displayed by this application come from:
-			<ol>
-				<li>Central Transportation Planning Staff of the Boston Region Metropolitan Planning Organization</li>
-				<li>Massachusetts Office of Geographic Information (MassGIS)</li>	  
-			</ol>
-		</p>
+          
 		<h3>Description of Database Fields</h3>
 		<p>
-        The data presented in here is for an average weekday ,for all vehicle types combined (auto and trucks).
-        The air quality results shown are combined total of Interzonal (between different TAZs) and Intrazonal (within same TAZ) activities.
+        The data presented are for an average weekday for all vehicle types combined (automobiles and trucks).
+        The air quality results shown are the combined total of Interzonal (between different  transportation analysis zones) and Intrazonal (within the same transportation analysis zone) activities.
 		</p>
         <p>
-        When the data is downloaded as a CSV file, it contains 8 columns (fields). The meaning of the data in these fields is displayed below:
-        </p>
-        
+        Once downloaded as a CSV file, the resulting report will show eight columns (fields). 
+        The meaning of the data in these fields is displayed in the table below.
+        </p>       
         <p>      
             <table>
                 <thead>
                     <tr class="tr_header">
-                        <th>Column Name</th> 
+                        <th>Data Name</th> 
                         <th>Description</th>
                     </tr>
                 </thead>
@@ -158,7 +160,7 @@
                 </tr>                
                 <tr>
                     <td>VMT_TOTAL</td> 
-                    <td>Total modeled VMT (miles) per Day</td>
+                    <td>Total modeled VMT (miles) per day</td>
                 </tr>               
                 <tr>
                     <td>VHT_TOTAL</td> 
@@ -166,33 +168,40 @@
                 </tr>               
                 <tr>
                     <td>VOC_TOTAL</td> 
-                    <td>Total Modeled Kilograms of VOC Emitted per Day</td>
+                    <td>Total modeled kilograms of VOC emitted per Day</td>
                 </tr>
                 <tr>
                     <td>NOX_TOTAL</td> 
-                    <td>Total Modeled Kilograms of NOx Emitted per Day</td>
+                    <td>Total modeled kilograms of NOx emitted per day</td>
                 </tr>           
                 <tr>
                     <td>CO_TOTAL</td> 
-                    <td>Total Modeled Kiograms of CO Emitted per Day</td>
+                    <td>Total modeled kiograms of CO emitted per day</td>
                 </tr>               
                 <tr>
                     <td>CO2_TOTAL</td> 
-                    <td>Total Modeled Kilograms of CO<sub>2</sub> Emitted per Day</td>
+                    <td>Total modeled kilograms of CO<sub>2</sub> emitted per day</td>
                 </tr>
             </table>
         </p>
         <p>
             <span>
-                CO2 = Carbon dioxide. 
-                CO = Carbon monoxide. 
-                HOV = High-occupancy vehicles. 
-                NOX = Nitrogen oxide. 
-                SOV = Single-occupancy vehicles. 
-                VMT = Vehicle-miles traveled. 
-                VHT = Vehicle-hours traveled. 
-                VOC = Volatile organic compounds.
+                CO<sub>2</sub> = carbon dioxide. 
+                CO = carbon monoxide. 
+                CTPS = Central Transportation Planning Staff. 
+                NOx = nitrous oxide.  
+                VMT = vehicle-miles traveled. 
+                VHT = vehicle-hours traveled. 
+                VOC = volatile organic compounds.
             </span>      
+		</p>
+        
+		<h3>Data Sources</h3>
+		<p>The data displayed by this application come from:
+			<ol>
+				<li>Central Transportation Planning Staff of the Boston Region Metropolitan Planning Organization</li>
+				<li>Massachusetts Office of Geographic Information</li>	  
+			</ol>
 		</p>
         
 		<div id="closeLink">
