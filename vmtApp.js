@@ -238,7 +238,7 @@ function vmtAppInit() {
         dataToLoad[2] = { 'METRIC' : 'VOC (kilograms)', 'DATA_2016' : rec_2016.VOC_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.VOC_TOTAL.toLocaleString() };
         dataToLoad[3] = { 'METRIC' : 'NOX (kilograms)', 'DATA_2016' : rec_2016.NOX_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.NOX_TOTAL.toLocaleString() };
         dataToLoad[4] = { 'METRIC' : 'CO (kilograms)', 'DATA_2016' : rec_2016.CO_TOTAL.toLocaleString(),  'DATA_2040' : rec_2040.CO_TOTAL.toLocaleString() };
-        dataToLoad[5] = { 'METRIC' : 'CO2 (kilograms)', 'DATA_2016' : rec_2016.CO2_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.CO2_TOTAL.toLocaleString() };            
+        dataToLoad[5] = { 'METRIC' : 'CO<sub>2</sub> (kilograms)', 'DATA_2016' : rec_2016.CO2_TOTAL.toLocaleString(), 'DATA_2040' : rec_2040.CO2_TOTAL.toLocaleString() };            
         CTPS.vmtApp.data_grid.loadArrayData(dataToLoad);    
     } // displayTabularDataForTown()
     
