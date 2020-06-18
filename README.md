@@ -25,7 +25,7 @@ Major version 1: circa 2014, by Mary McShane
 
 This version used data sources housed in an Oracle/ArcSDE database, published
 by GeoServer as WFSs, and rendered data in the client by OpenLayers (version 2).
-The source code for this version was never checed into GitHub.
+The source code for this version was never checked into GitHub.
 
 This app depends upon the following external libraries:
   1. jQuery.js version 1.7.1
