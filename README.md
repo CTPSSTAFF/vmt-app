@@ -37,3 +37,8 @@ This app depends upon the following external libraries:
   6. CTPS ctpsutils.js
 
 Previous versions of this app depended upon verion 1.9.4 of the jQuery accessibleTabs plugin.
+
+## Colophon
+Author: Ben Krepp (bkrepp@ctps.org)
+Last revision: August 2019
+Location: Cyberspace
